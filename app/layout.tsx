@@ -56,20 +56,19 @@ export default function RootLayout({
               </div>
 
               <div className="flex items-center gap-6">
-                <button className="relative">
-                  <img
-                    src="https://www.figma.com/api/mcp/asset/7ff15cd8-7e49-477b-9c83-d583a90e12b2"
-                    alt="Notifications"
-                    className="w-6 h-6"
-                  />
+                <button className="relative text-white hover:opacity-80 transition-opacity">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                  </svg>
                 </button>
 
-                <button>
-                  <img
-                    src="https://www.figma.com/api/mcp/asset/42c9306f-4fc7-43e9-be13-971b90c1b99e"
-                    alt="Help"
-                    className="w-6 h-6"
-                  />
+                <button className="text-white hover:opacity-80 transition-opacity">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+                    <line x1="12" y1="17" x2="12.01" y2="17"/>
+                  </svg>
                 </button>
 
                 <div className="relative">
