@@ -139,6 +139,58 @@ function CampaignsPageContent() {
         </div>
       </div>
 
+      {/* Season Ticket Renewal CTA Banner */}
+      <div className="px-8 pb-6">
+        <div
+          className="relative overflow-hidden rounded-xl border-2 border-[#4c65f0] p-6 flex items-center justify-between"
+          style={{
+            background: 'linear-gradient(135deg, rgba(76, 101, 240, 0.08) 0%, rgba(204, 255, 0, 0.08) 100%)'
+          }}
+        >
+          {/* Left Content */}
+          <div className="flex items-start gap-4">
+            {/* Icon */}
+            <div className="flex-shrink-0 w-12 h-12 rounded-full bg-[#4c65f0] flex items-center justify-center">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"
+                  fill="white" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+
+            {/* Text Content */}
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-[#4c65f0] text-white text-xs font-semibold">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="white">
+                    <circle cx="7" cy="7" r="6" stroke="white" strokeWidth="1.5" fill="none"/>
+                    <path d="M7 3.5V7l2.5 2.5" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
+                  </svg>
+                  Seasonal Opportunity
+                </span>
+              </div>
+              <h3 className="text-xl font-bold text-black tracking-tight">
+                Time to Launch Season Ticket Renewals
+              </h3>
+              <p className="text-base text-[rgba(0,0,0,0.75)] tracking-tight max-w-2xl">
+                Based on your renewal cycle, now is the optimal time to engage season ticket holders.
+                Launch a targeted renewal campaign to secure commitments for next season and maximize early bird adoption.
+              </p>
+            </div>
+          </div>
+
+          {/* Right CTA Button */}
+          <Link
+            href="/chat?workflow=str"
+            className="flex-shrink-0 bg-[#4c65f0] hover:bg-[#3d52c9] text-white px-8 py-3 rounded-full font-semibold text-base tracking-tight transition-all hover:scale-105 shadow-lg flex items-center gap-2"
+          >
+            <span>Create Campaign</span>
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="white">
+              <path d="M7.5 15l5-5-5-5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </Link>
+        </div>
+      </div>
+
       {/* Campaigns Table */}
       <div className="px-8">
         <div className="flex flex-col">

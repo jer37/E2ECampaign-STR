@@ -26,24 +26,6 @@ const STORAGE_KEY = 'timberwolves_campaigns';
 // Mock campaigns with game linkages (fallback if no localStorage campaigns)
 const mockCampaigns: Campaign[] = [
   {
-    id: 1,
-    title: 'Season ticket renewal campaign',
-    description: 'Target current season ticket holders who haven\'t renewed yet with early bird pricing and exclusive perks',
-    status: 'Active',
-    segment: 'New Fans',
-    type: 'Revenue',
-    actualRevenue: 425000,
-    projectedRevenue: 500000,
-    delivered: 100,
-    opened: 75,
-    converted: 33,
-    lastEdited: 'Last Edited Wed, Jul 17 9:44am by Joel Resnicow',
-    linkedGames: [
-      { gameId: 'game-19', estimatedImpact: 65000, impactPercentage: 4 },
-      { gameId: 'game-3', estimatedImpact: 22000, impactPercentage: 1.5 },
-    ],
-  },
-  {
     id: 2,
     title: 'Flex plan to half season membership',
     description: 'Convert flex plan holders to half season using low priced upper bowl inventory',
