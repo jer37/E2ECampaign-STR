@@ -43,7 +43,18 @@ function ChatPageContent() {
     ? recommendation.chatPrompt
     : 'Create a Kevin Garnett campaign targeting young professionals and group buyers with special packages around his jersey retirement night on Jan 15 vs. the Pacers';
 
+  // Check if this is STR workflow (needed before useEffect)
+  const isSTRWorkflow = workflowType === 'str' && !selectedGoal;
+  // Check if ANY part of STR workflow (including after campaign generation)
+  const isAnySTRWorkflow = workflowType === 'str';
+
   useEffect(() => {
+    // For STR workflow, just show the content without animation
+    if (isAnySTRWorkflow) {
+      setTimeout(() => setIsVisible(true), 100);
+      return;
+    }
+
     // Show user message first
     setTimeout(() => setIsVisible(true), 100);
 
@@ -84,7 +95,7 @@ function ChatPageContent() {
 
     // Auto-scroll to bottom
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, []);
+  }, [isAnySTRWorkflow]);
 
   const handleLaunchCampaign = () => {
     // Extract campaign data from sidebar content
@@ -136,9 +147,6 @@ function ChatPageContent() {
 
   // State for slider value in STR workflow
   const [sliderValue, setSliderValue] = useState(50);
-
-  // If this is the Season Ticket Renewal workflow and no goal selected, show slider in chat
-  const isSTRWorkflow = workflowType === 'str' && !selectedGoal;
 
   // Generate STR-specific thinking steps based on user selections
   const generateSTRThinkingSteps = () => {
@@ -371,7 +379,7 @@ function ChatPageContent() {
         <div className="flex-1 overflow-y-auto px-8 py-8">
           <div className="max-w-[624px] mx-auto space-y-6">
             {/* User Message - Only show for non-STR workflows */}
-            {!isSTRWorkflow && (
+            {!isAnySTRWorkflow && (
               <div
                 className="flex justify-end transition-all duration-700"
                 style={{
@@ -402,7 +410,7 @@ function ChatPageContent() {
             )}
 
             {/* STR Workflow - Goal Selection Step 1 */}
-            {isSTRWorkflow && (
+            {isAnySTRWorkflow && (
               <div
                 className="transition-all duration-700"
                 style={{
@@ -542,7 +550,7 @@ function ChatPageContent() {
             )}
 
             {/* STR Workflow - Additional Preferences Step 2 */}
-            {isSTRWorkflow && sliderSubmitted && !selectedGoal && (
+            {isAnySTRWorkflow && sliderSubmitted && (
               <div
                 className="transition-all duration-700"
                 style={{
@@ -565,7 +573,8 @@ function ChatPageContent() {
                       type="checkbox"
                       checked={checkboxSelections.longtimeMembers}
                       onChange={(e) => setCheckboxSelections({...checkboxSelections, longtimeMembers: e.target.checked})}
-                      className="w-5 h-5 mt-0.5 rounded border-2 border-[rgba(0,0,0,0.3)] text-[#4c65f0] focus:ring-[#4c65f0] cursor-pointer"
+                      disabled={generatingCampaign}
+                      className="w-5 h-5 mt-0.5 rounded border-2 border-[rgba(0,0,0,0.3)] text-[#4c65f0] focus:ring-[#4c65f0] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                     />
                     <span className="text-base text-black tracking-tight group-hover:text-[#4c65f0] transition-colors">
                       Renewals of longtime members
@@ -579,7 +588,8 @@ function ChatPageContent() {
                         type="checkbox"
                         checked={checkboxSelections.cappingPrice}
                         onChange={(e) => setCheckboxSelections({...checkboxSelections, cappingPrice: e.target.checked})}
-                        className="w-5 h-5 mt-0.5 rounded border-2 border-[rgba(0,0,0,0.3)] text-[#4c65f0] focus:ring-[#4c65f0] cursor-pointer"
+                        disabled={generatingCampaign}
+                        className="w-5 h-5 mt-0.5 rounded border-2 border-[rgba(0,0,0,0.3)] text-[#4c65f0] focus:ring-[#4c65f0] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                       />
                       <span className="text-base text-black tracking-tight group-hover:text-[#4c65f0] transition-colors">
                         Capping Maximum Price Increase
@@ -605,8 +615,9 @@ function ChatPageContent() {
                                 setPriceCapPercentage(val);
                               }
                             }}
+                            disabled={generatingCampaign}
                             placeholder="0"
-                            className="w-20 px-3 py-2 border border-[rgba(0,0,0,0.23)] rounded text-base text-black focus:outline-none focus:border-[#4c65f0] focus:border-2"
+                            className="w-20 px-3 py-2 border border-[rgba(0,0,0,0.23)] rounded text-base text-black focus:outline-none focus:border-[#4c65f0] focus:border-2 disabled:opacity-50 disabled:cursor-not-allowed"
                           />
                           <span className="absolute right-3 top-1/2 -translate-y-1/2 text-base text-[rgba(0,0,0,0.5)]">
                             %
@@ -622,7 +633,8 @@ function ChatPageContent() {
                       type="checkbox"
                       checked={checkboxSelections.upsellingQuarterToHalf}
                       onChange={(e) => setCheckboxSelections({...checkboxSelections, upsellingQuarterToHalf: e.target.checked})}
-                      className="w-5 h-5 mt-0.5 rounded border-2 border-[rgba(0,0,0,0.3)] text-[#4c65f0] focus:ring-[#4c65f0] cursor-pointer"
+                      disabled={generatingCampaign}
+                      className="w-5 h-5 mt-0.5 rounded border-2 border-[rgba(0,0,0,0.3)] text-[#4c65f0] focus:ring-[#4c65f0] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                     />
                     <span className="text-base text-black tracking-tight group-hover:text-[#4c65f0] transition-colors">
                       Upselling from Quarter to Half Season
@@ -635,7 +647,8 @@ function ChatPageContent() {
                       type="checkbox"
                       checked={checkboxSelections.upsellingHalfToFull}
                       onChange={(e) => setCheckboxSelections({...checkboxSelections, upsellingHalfToFull: e.target.checked})}
-                      className="w-5 h-5 mt-0.5 rounded border-2 border-[rgba(0,0,0,0.3)] text-[#4c65f0] focus:ring-[#4c65f0] cursor-pointer"
+                      disabled={generatingCampaign}
+                      className="w-5 h-5 mt-0.5 rounded border-2 border-[rgba(0,0,0,0.3)] text-[#4c65f0] focus:ring-[#4c65f0] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                     />
                     <span className="text-base text-black tracking-tight group-hover:text-[#4c65f0] transition-colors">
                       Upselling from Half to Full Season
@@ -648,25 +661,28 @@ function ChatPageContent() {
                       type="checkbox"
                       checked={checkboxSelections.crossSellAtRisk}
                       onChange={(e) => setCheckboxSelections({...checkboxSelections, crossSellAtRisk: e.target.checked})}
-                      className="w-5 h-5 mt-0.5 rounded border-2 border-[rgba(0,0,0,0.3)] text-[#4c65f0] focus:ring-[#4c65f0] cursor-pointer"
+                      disabled={generatingCampaign}
+                      className="w-5 h-5 mt-0.5 rounded border-2 border-[rgba(0,0,0,0.3)] text-[#4c65f0] focus:ring-[#4c65f0] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                     />
                     <span className="text-base text-black tracking-tight group-hover:text-[#4c65f0] transition-colors">
                       Cross Sell Subscriptions to At Risk Accounts
                     </span>
                   </label>
 
-                  {/* Continue Button */}
-                  <div className="flex justify-center pt-4">
-                    <button
-                      onClick={() => {
-                        setGeneratingCampaign(true);
-                        setSelectedGoal(`slider-${sliderValue}`);
-                      }}
-                      className="bg-[#4c65f0] hover:bg-[#3d52c9] text-white px-10 py-3 rounded-full font-semibold text-base tracking-tight transition-all hover:scale-105 shadow-lg"
-                    >
-                      Continue
-                    </button>
-                  </div>
+                  {/* Continue Button - Hide after campaign generation starts */}
+                  {!generatingCampaign && (
+                    <div className="flex justify-center pt-4">
+                      <button
+                        onClick={() => {
+                          setGeneratingCampaign(true);
+                          setSelectedGoal(`slider-${sliderValue}`);
+                        }}
+                        className="bg-[#4c65f0] hover:bg-[#3d52c9] text-white px-10 py-3 rounded-full font-semibold text-base tracking-tight transition-all hover:scale-105 shadow-lg"
+                      >
+                        Continue
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -812,7 +828,7 @@ function ChatPageContent() {
             )}
 
             {/* Regular Campaign Response */}
-            {showText && !isSTRWorkflow && (
+            {showText && !isAnySTRWorkflow && (
             <div className="space-y-6">
               <div className="text-sm text-black leading-[22px] tracking-tight animate-fade-in" style={{ animationDelay: '0ms' }}>
                 <p>
