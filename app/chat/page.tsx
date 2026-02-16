@@ -26,6 +26,8 @@ function ChatPageContent() {
   const [showText, setShowText] = useState(false);
   const [showSidebar, setShowSidebar] = useState(false);
   const [selectedGoal, setSelectedGoal] = useState<string | null>(null);
+  const [showHistoricalTable, setShowHistoricalTable] = useState(false);
+  const [showGoalQuestion, setShowGoalQuestion] = useState(false);
   const [sliderSubmitted, setSliderSubmitted] = useState(false);
   const [checkboxSelections, setCheckboxSelections] = useState({
     longtimeMembers: false,
@@ -35,6 +37,20 @@ function ChatPageContent() {
     crossSellAtRisk: false,
   });
   const [priceCapPercentage, setPriceCapPercentage] = useState('');
+  const [preferencesSubmitted, setPreferencesSubmitted] = useState(false);
+  const [paymentPlans, setPaymentPlans] = useState({
+    plan1: false, // 10% upfront, 12 monthly
+    plan2: false, // 15% upfront, 9 monthly (recommended)
+    plan3: false, // 10% upfront, 6 payments
+  });
+  const [paymentPlansSubmitted, setPaymentPlansSubmitted] = useState(false);
+  const [requireFullUpfront, setRequireFullUpfront] = useState<boolean | null>(null);
+  const [optOutOptions, setOptOutOptions] = useState({
+    discountCredits: false,
+    offerHalfQuarter: false,
+    freeUpgrades: false,
+  });
+  const [optOutSubmitted, setOptOutSubmitted] = useState(false);
   const [generatingCampaign, setGeneratingCampaign] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -49,9 +65,11 @@ function ChatPageContent() {
   const isAnySTRWorkflow = workflowType === 'str';
 
   useEffect(() => {
-    // For STR workflow, just show the content without animation
+    // For STR workflow, show items sequentially
     if (isAnySTRWorkflow) {
       setTimeout(() => setIsVisible(true), 100);
+      setTimeout(() => setShowHistoricalTable(true), 800);
+      setTimeout(() => setShowGoalQuestion(true), 1600);
       return;
     }
 
@@ -103,7 +121,7 @@ function ChatPageContent() {
 
     if (generatingCampaign) {
       // STR Workflow campaign data
-      const revenueValue = (76.3 - (sliderValue / 100) * 13.5).toFixed(1);
+      const revenueValue = (81.2 - (sliderValue / 100) * 10.1).toFixed(1);
       const renewalRate = Math.round(67 + (sliderValue / 100) * 20);
 
       newCampaign = {
@@ -150,7 +168,7 @@ function ChatPageContent() {
 
   // Generate STR-specific thinking steps based on user selections
   const generateSTRThinkingSteps = () => {
-    const revenueValue = (76.3 - (sliderValue / 100) * 13.5).toFixed(1);
+    const revenueValue = (81.2 - (sliderValue / 100) * 10.1).toFixed(1);
     const renewalRate = Math.round(67 + (sliderValue / 100) * 20);
     const isRevenueFocused = sliderValue < 40;
     const isRenewalFocused = sliderValue > 60;
@@ -217,7 +235,7 @@ function ChatPageContent() {
 
   // Generate STR campaign content based on user selections
   const generateSTRCampaignContent = () => {
-    const revenueValue = (76.3 - (sliderValue / 100) * 13.5).toFixed(1);
+    const revenueValue = (81.2 - (sliderValue / 100) * 10.1).toFixed(1);
     const renewalRate = Math.round(67 + (sliderValue / 100) * 20);
     const isRevenueFocused = sliderValue < 40;
     const isRenewalFocused = sliderValue > 60;
@@ -291,9 +309,17 @@ function ChatPageContent() {
 
       testing: `To optimize performance, we'll implement A/B testing across key campaign elements: subject line variations (recognition vs. urgency), send time optimization (weekday vs. weekend), and pricing presentation (savings vs. value).${checkboxSelections.cappingPrice ? ' The price cap messaging will be tested for clarity and acceptance.' : ''} Mobile-first design ensures seamless renewal across all devices.`,
 
-      inventory: `Channel orchestration begins with email to all segments, followed by SMS reminders 7 days before deadline. ${checkboxSelections.crossSellAtRisk ? 'Non-renewing members receive targeted subscription offers via retargeting campaigns.' : ''} Payment plans are available for all tiers${checkboxSelections.cappingPrice ? ', aligning with your price sensitivity focus' : ''}, with automated billing options to reduce friction.`,
+      inventory: `Channel orchestration begins with email to all segments, followed by SMS reminders 7 days before deadline. ${checkboxSelections.crossSellAtRisk ? 'Non-renewing members receive targeted subscription offers via retargeting campaigns.' : ''} Multiple payment plans are offered: ${[
+        paymentPlans.plan1 && '10% upfront with 12 monthly payments',
+        paymentPlans.plan2 && '15% upfront with 9 monthly payments (recommended)',
+        paymentPlans.plan3 && '10% upfront with 6 payments'
+      ].filter(Boolean).join(', ') || 'flexible payment options'}. ${requireFullUpfront ? 'Fans who missed payment deadlines last season must pay in full upfront to ensure commitment.' : 'All fans, including those who missed deadlines, have access to payment plans to maximize inclusivity.'} Automated billing reduces friction across all tiers.`,
 
-      conclusion: `With projected ${renewalRate}% retention and $${revenueValue}MM in revenue, this campaign balances${isRevenueFocused ? ' revenue generation' : isRenewalFocused ? ' member satisfaction' : ' strategic objectives'} while maintaining strong fan relationships. ${checkboxSelections.upsellingQuarterToHalf || checkboxSelections.upsellingHalfToFull ? 'Upsell opportunities add' : 'Segment-specific messaging drives'} incremental value beyond base renewals. Launch immediately to maximize${checkboxSelections.longtimeMembers ? ' loyalty recognition impact' : ' early bird participation'}.`
+      conclusion: `With projected ${renewalRate}% retention and $${revenueValue}MM in revenue, this campaign balances${isRevenueFocused ? ' revenue generation' : isRenewalFocused ? ' member satisfaction' : ' strategic objectives'} while maintaining strong fan relationships. ${checkboxSelections.upsellingQuarterToHalf || checkboxSelections.upsellingHalfToFull ? 'Upsell opportunities add' : 'Segment-specific messaging drives'} incremental value beyond base renewals.${(optOutOptions.discountCredits || optOutOptions.offerHalfQuarter || optOutOptions.freeUpgrades) ? ` For fans opting out of auto-renewal, we've prepared retention offers including ${[
+        optOutOptions.discountCredits && 'credit-based discounts',
+        optOutOptions.offerHalfQuarter && 'partial season plan alternatives',
+        optOutOptions.freeUpgrades && '3 free seat upgrades'
+      ].filter(Boolean).join(', ')} to maintain engagement.` : ''} Launch immediately to maximize${checkboxSelections.longtimeMembers ? ' loyalty recognition impact' : ' early bird participation'}.`
     };
   };
 
@@ -409,7 +435,7 @@ function ChatPageContent() {
               </div>
             )}
 
-            {/* STR Workflow - Goal Selection Step 1 */}
+            {/* STR Workflow - Greeting */}
             {isAnySTRWorkflow && (
               <div
                 className="transition-all duration-700"
@@ -423,15 +449,26 @@ function ChatPageContent() {
                   <p className="text-base text-black leading-[26px] tracking-tight mb-4">
                     Hi there, let's get started
                   </p>
-                  <p className="text-base text-[rgba(0,0,0,0.75)] leading-[26px] tracking-tight mb-4">
-                    What is your goal for this upcoming season?
-                  </p>
-                  <p className="text-sm text-[rgba(0,0,0,0.65)] leading-[22px] tracking-tight mb-4">
-                    As a reminder, here's your renewal performance for the past 3 seasons:
-                  </p>
+                  {showHistoricalTable && (
+                    <p className="text-base text-[rgba(0,0,0,0.75)] leading-[26px] tracking-tight mb-4">
+                      As a reminder, here's your renewal performance for the past 3 seasons:
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
 
-                  {/* Historical Performance Table */}
-                  <div className="bg-white border border-[rgba(0,0,0,0.1)] rounded-lg overflow-hidden mb-6">
+            {/* STR Workflow - Historical Performance Table */}
+            {isAnySTRWorkflow && showHistoricalTable && (
+              <div
+                className="transition-all duration-700 mb-6"
+                style={{
+                  opacity: 1,
+                  transform: 'translateY(0)',
+                }}
+              >
+                {/* Historical Performance Table */}
+                <div className="bg-white border border-[rgba(0,0,0,0.1)] rounded-lg overflow-hidden mb-6">
                     <table className="w-full text-sm">
                       <thead>
                         <tr className="bg-[rgba(0,0,0,0.02)] border-b border-[rgba(0,0,0,0.1)]">
@@ -471,6 +508,23 @@ function ChatPageContent() {
                       </tbody>
                     </table>
                   </div>
+              </div>
+            )}
+
+            {/* STR Workflow - Goal Question and Slider */}
+            {isAnySTRWorkflow && showGoalQuestion && (
+              <div
+                className="transition-all duration-700"
+                style={{
+                  opacity: 1,
+                  transform: 'translateY(0)',
+                }}
+              >
+                {/* Goal Question */}
+                <div className="mb-6">
+                  <p className="text-base text-[rgba(0,0,0,0.75)] leading-[26px] tracking-tight">
+                    What is your goal for this upcoming season?
+                  </p>
                 </div>
 
                 {/* Slider Container */}
@@ -482,7 +536,7 @@ function ChatPageContent() {
                         Maximize Revenue
                       </div>
                       <div className="text-sm text-[rgba(0,0,0,0.5)] leading-[20px]">
-                        Focus on higher pricing and premium conversions
+                        Focus on higher pricing for premium inventory
                       </div>
                     </div>
                     <div className="text-right max-w-[200px]">
@@ -490,7 +544,7 @@ function ChatPageContent() {
                         Maximize Renewals
                       </div>
                       <div className="text-sm text-[rgba(0,0,0,0.5)] leading-[20px]">
-                        Focus on retention rate and holder satisfaction
+                        Focus on retention rate and fan perceived value
                       </div>
                     </div>
                   </div>
@@ -519,7 +573,7 @@ function ChatPageContent() {
                         Forecasted Revenue
                       </div>
                       <div className="text-3xl font-bold text-black tracking-tight">
-                        ${(76.3 - (sliderValue / 100) * 13.5).toFixed(1)}MM
+                        ${(81.2 - (sliderValue / 100) * 10.1).toFixed(1)}MM
                       </div>
                     </div>
 
@@ -573,7 +627,7 @@ function ChatPageContent() {
                       type="checkbox"
                       checked={checkboxSelections.longtimeMembers}
                       onChange={(e) => setCheckboxSelections({...checkboxSelections, longtimeMembers: e.target.checked})}
-                      disabled={generatingCampaign}
+                      disabled={preferencesSubmitted || generatingCampaign}
                       className="w-5 h-5 mt-0.5 rounded border-2 border-[rgba(0,0,0,0.3)] text-[#4c65f0] focus:ring-[#4c65f0] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                     />
                     <span className="text-base text-black tracking-tight group-hover:text-[#4c65f0] transition-colors">
@@ -615,7 +669,7 @@ function ChatPageContent() {
                                 setPriceCapPercentage(val);
                               }
                             }}
-                            disabled={generatingCampaign}
+                            disabled={preferencesSubmitted || generatingCampaign}
                             placeholder="0"
                             className="w-20 px-3 py-2 border border-[rgba(0,0,0,0.23)] rounded text-base text-black focus:outline-none focus:border-[#4c65f0] focus:border-2 disabled:opacity-50 disabled:cursor-not-allowed"
                           />
@@ -633,7 +687,7 @@ function ChatPageContent() {
                       type="checkbox"
                       checked={checkboxSelections.upsellingQuarterToHalf}
                       onChange={(e) => setCheckboxSelections({...checkboxSelections, upsellingQuarterToHalf: e.target.checked})}
-                      disabled={generatingCampaign}
+                      disabled={preferencesSubmitted || generatingCampaign}
                       className="w-5 h-5 mt-0.5 rounded border-2 border-[rgba(0,0,0,0.3)] text-[#4c65f0] focus:ring-[#4c65f0] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                     />
                     <span className="text-base text-black tracking-tight group-hover:text-[#4c65f0] transition-colors">
@@ -647,7 +701,7 @@ function ChatPageContent() {
                       type="checkbox"
                       checked={checkboxSelections.upsellingHalfToFull}
                       onChange={(e) => setCheckboxSelections({...checkboxSelections, upsellingHalfToFull: e.target.checked})}
-                      disabled={generatingCampaign}
+                      disabled={preferencesSubmitted || generatingCampaign}
                       className="w-5 h-5 mt-0.5 rounded border-2 border-[rgba(0,0,0,0.3)] text-[#4c65f0] focus:ring-[#4c65f0] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                     />
                     <span className="text-base text-black tracking-tight group-hover:text-[#4c65f0] transition-colors">
@@ -661,7 +715,7 @@ function ChatPageContent() {
                       type="checkbox"
                       checked={checkboxSelections.crossSellAtRisk}
                       onChange={(e) => setCheckboxSelections({...checkboxSelections, crossSellAtRisk: e.target.checked})}
-                      disabled={generatingCampaign}
+                      disabled={preferencesSubmitted || generatingCampaign}
                       className="w-5 h-5 mt-0.5 rounded border-2 border-[rgba(0,0,0,0.3)] text-[#4c65f0] focus:ring-[#4c65f0] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                     />
                     <span className="text-base text-black tracking-tight group-hover:text-[#4c65f0] transition-colors">
@@ -669,11 +723,238 @@ function ChatPageContent() {
                     </span>
                   </label>
 
-                  {/* Continue Button - Hide after campaign generation starts */}
-                  {!generatingCampaign && (
+                  {/* Continue Button - Hide after submission */}
+                  {!preferencesSubmitted && (
+                    <div className="flex justify-center pt-4">
+                      <button
+                        onClick={() => setPreferencesSubmitted(true)}
+                        className="bg-[#4c65f0] hover:bg-[#3d52c9] text-white px-10 py-3 rounded-full font-semibold text-base tracking-tight transition-all hover:scale-105 shadow-lg"
+                      >
+                        Continue
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* STR Workflow - Payment Plans Step 3 */}
+            {isAnySTRWorkflow && preferencesSubmitted && (
+              <div
+                className="transition-all duration-700"
+                style={{
+                  opacity: 1,
+                  transform: 'translateY(0)',
+                }}
+              >
+                {/* AI Question */}
+                <div className="mb-6">
+                  <p className="text-base text-black leading-[26px] tracking-tight mb-6">
+                    What kind of payment plans do you want to make available?
+                  </p>
+                </div>
+
+                {/* Payment Plans Table */}
+                <div className="bg-white border border-[rgba(0,0,0,0.1)] rounded-2xl p-8 space-y-6">
+                  <div className="space-y-4">
+                    {/* Plan 1: 10% upfront, 12 monthly */}
+                    <label className="flex items-center gap-4 cursor-pointer group p-4 rounded-lg hover:bg-[rgba(76,101,240,0.03)] transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={paymentPlans.plan1}
+                        onChange={(e) => setPaymentPlans({...paymentPlans, plan1: e.target.checked})}
+                        disabled={paymentPlansSubmitted}
+                        className="w-5 h-5 rounded border-2 border-[rgba(0,0,0,0.3)] text-[#4c65f0] focus:ring-[#4c65f0] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                      />
+                      <div className="flex-1">
+                        <div className="text-base font-semibold text-black tracking-tight">
+                          10% upfront, with 12 equal monthly payments
+                        </div>
+                        <div className="text-sm text-[rgba(0,0,0,0.5)] mt-1">
+                          Lowest initial commitment, spread over full year
+                        </div>
+                      </div>
+                    </label>
+
+                    {/* Plan 2: 15% upfront, 9 monthly [Recommended] */}
+                    <label className="flex items-center gap-4 cursor-pointer group p-4 rounded-lg hover:bg-[rgba(76,101,240,0.03)] transition-colors border-2 border-[#4c65f0] bg-[rgba(76,101,240,0.02)]">
+                      <input
+                        type="checkbox"
+                        checked={paymentPlans.plan2}
+                        onChange={(e) => setPaymentPlans({...paymentPlans, plan2: e.target.checked})}
+                        disabled={paymentPlansSubmitted}
+                        className="w-5 h-5 rounded border-2 border-[rgba(0,0,0,0.3)] text-[#4c65f0] focus:ring-[#4c65f0] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                      />
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <div className="text-base font-semibold text-black tracking-tight">
+                            15% upfront with 9 equal payments
+                          </div>
+                          <span className="text-xs font-bold text-[#4c65f0] bg-[rgba(76,101,240,0.1)] px-2 py-1 rounded">
+                            RECOMMENDED
+                          </span>
+                        </div>
+                        <div className="text-sm text-[rgba(0,0,0,0.5)] mt-1">
+                          Balanced commitment, completed before season ends
+                        </div>
+                      </div>
+                    </label>
+
+                    {/* Plan 3: 10% upfront, 6 payments */}
+                    <label className="flex items-center gap-4 cursor-pointer group p-4 rounded-lg hover:bg-[rgba(76,101,240,0.03)] transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={paymentPlans.plan3}
+                        onChange={(e) => setPaymentPlans({...paymentPlans, plan3: e.target.checked})}
+                        disabled={paymentPlansSubmitted}
+                        className="w-5 h-5 rounded border-2 border-[rgba(0,0,0,0.3)] text-[#4c65f0] focus:ring-[#4c65f0] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                      />
+                      <div className="flex-1">
+                        <div className="text-base font-semibold text-black tracking-tight">
+                          10% upfront with 6 equal payments
+                        </div>
+                        <div className="text-sm text-[rgba(0,0,0,0.5)] mt-1">
+                          Higher monthly amount, faster payoff timeline
+                        </div>
+                      </div>
+                    </label>
+                  </div>
+
+                  {/* Continue Button */}
+                  {!paymentPlansSubmitted && (
+                    <div className="flex justify-center pt-4">
+                      <button
+                        onClick={() => setPaymentPlansSubmitted(true)}
+                        className="bg-[#4c65f0] hover:bg-[#3d52c9] text-white px-10 py-3 rounded-full font-semibold text-base tracking-tight transition-all hover:scale-105 shadow-lg"
+                      >
+                        Continue
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* STR Workflow - Full Upfront Payment Question */}
+            {isAnySTRWorkflow && paymentPlansSubmitted && (
+              <div
+                className="transition-all duration-700 mt-6"
+                style={{
+                  opacity: 1,
+                  transform: 'translateY(0)',
+                }}
+              >
+                {/* AI Question */}
+                <div className="mb-4">
+                  <p className="text-base text-black leading-[26px] tracking-tight">
+                    Require full upfront payment for fans who missed payment deadlines last season?
+                  </p>
+                </div>
+
+                {/* Yes/No Buttons or Selected Answer */}
+                {requireFullUpfront === null ? (
+                  <div className="flex gap-4">
+                    <button
+                      onClick={() => setRequireFullUpfront(true)}
+                      className="flex-1 bg-white border-2 border-[rgba(0,0,0,0.15)] hover:border-[#4c65f0] hover:bg-[rgba(76,101,240,0.03)] text-black px-8 py-4 rounded-xl font-semibold text-base tracking-tight transition-all"
+                    >
+                      Yes
+                    </button>
+                    <button
+                      onClick={() => setRequireFullUpfront(false)}
+                      className="flex-1 bg-white border-2 border-[rgba(0,0,0,0.15)] hover:border-[#4c65f0] hover:bg-[rgba(76,101,240,0.03)] text-black px-8 py-4 rounded-xl font-semibold text-base tracking-tight transition-all"
+                    >
+                      No
+                    </button>
+                  </div>
+                ) : (
+                  <div className="bg-[rgba(76,101,240,0.05)] border border-[rgba(76,101,240,0.2)] rounded-xl px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <svg width="20" height="20" viewBox="0 0 20 20" fill="#4c65f0">
+                        <path d="M10 2L10 14M10 2L6 6M10 2L14 6" stroke="#4c65f0" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                      <span className="text-base font-semibold text-[#4c65f0] tracking-tight">
+                        {requireFullUpfront ? 'Yes' : 'No'}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* STR Workflow - Opt-Out Options */}
+            {isAnySTRWorkflow && requireFullUpfront !== null && (
+              <div
+                className="transition-all duration-700 mt-6"
+                style={{
+                  opacity: 1,
+                  transform: 'translateY(0)',
+                }}
+              >
+                {/* AI Question */}
+                <div className="mb-6">
+                  <p className="text-base text-black leading-[26px] tracking-tight mb-6">
+                    For fans who opt out of auto-renewal, what options do you want to provide to them?
+                  </p>
+                </div>
+
+                {/* Opt-Out Options Card */}
+                <div className="bg-white border border-[rgba(0,0,0,0.1)] rounded-2xl p-8 space-y-6">
+                  {/* Option 1: Discount equivalent to unused credits */}
+                  <label className="flex items-start gap-3 cursor-pointer group">
+                    <input
+                      type="checkbox"
+                      checked={optOutOptions.discountCredits}
+                      onChange={(e) => setOptOutOptions({...optOutOptions, discountCredits: e.target.checked})}
+                      disabled={optOutSubmitted}
+                      className="w-5 h-5 mt-0.5 rounded border-2 border-[rgba(0,0,0,0.3)] text-[#4c65f0] focus:ring-[#4c65f0] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    />
+                    <span className="text-base text-black tracking-tight group-hover:text-[#4c65f0] transition-colors">
+                      Offer discount equivalent to unused credits from prior season
+                    </span>
+                  </label>
+
+                  {/* Option 2: Half or quarter season plans */}
+                  <label className="flex items-start gap-3 cursor-pointer group">
+                    <input
+                      type="checkbox"
+                      checked={optOutOptions.offerHalfQuarter}
+                      onChange={(e) => setOptOutOptions({...optOutOptions, offerHalfQuarter: e.target.checked})}
+                      disabled={optOutSubmitted}
+                      className="w-5 h-5 mt-0.5 rounded border-2 border-[rgba(0,0,0,0.3)] text-[#4c65f0] focus:ring-[#4c65f0] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    />
+                    <span className="text-base text-black tracking-tight group-hover:text-[#4c65f0] transition-colors">
+                      Offer half or quarter season plans on the same seat
+                    </span>
+                  </label>
+
+                  {/* Option 3: Free upgrades */}
+                  <label className="flex items-start gap-3 cursor-pointer group p-4 rounded-lg hover:bg-[rgba(76,101,240,0.03)] transition-colors border-2 border-[#4c65f0] bg-[rgba(76,101,240,0.02)]">
+                    <input
+                      type="checkbox"
+                      checked={optOutOptions.freeUpgrades}
+                      onChange={(e) => setOptOutOptions({...optOutOptions, freeUpgrades: e.target.checked})}
+                      disabled={optOutSubmitted}
+                      className="w-5 h-5 mt-0.5 rounded border-2 border-[rgba(0,0,0,0.3)] text-[#4c65f0] focus:ring-[#4c65f0] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    />
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-base text-black tracking-tight group-hover:text-[#4c65f0] transition-colors">
+                          Offer 3 free upgrades to next best price level
+                        </span>
+                        <span className="text-xs font-bold text-[#4c65f0] bg-[rgba(76,101,240,0.1)] px-2 py-1 rounded">
+                          RECOMMENDED
+                        </span>
+                      </div>
+                    </div>
+                  </label>
+
+                  {/* Continue Button */}
+                  {!optOutSubmitted && (
                     <div className="flex justify-center pt-4">
                       <button
                         onClick={() => {
+                          setOptOutSubmitted(true);
                           setGeneratingCampaign(true);
                           setSelectedGoal(`slider-${sliderValue}`);
                         }}
@@ -1022,7 +1303,7 @@ function ChatPageContent() {
             <>
               {/* STR Campaign Sidebar */}
               {(() => {
-                const revenueValue = (76.3 - (sliderValue / 100) * 13.5).toFixed(1);
+                const revenueValue = (81.2 - (sliderValue / 100) * 10.1).toFixed(1);
                 const renewalRate = Math.round(67 + (sliderValue / 100) * 20);
 
                 return (
@@ -1072,6 +1353,13 @@ function ChatPageContent() {
                         title="Campaign Duration"
                         value="60-day renewal window"
                       />
+                      {(paymentPlans.plan1 || paymentPlans.plan2 || paymentPlans.plan3) && (
+                        <SectionCard
+                          icon="https://www.figma.com/api/mcp/asset/1821a86c-cb32-46b4-94c7-66e989c3173f"
+                          title="Payment Plans"
+                          value={`${[paymentPlans.plan1 && '12mo', paymentPlans.plan2 && '9mo', paymentPlans.plan3 && '6mo'].filter(Boolean).join(', ')} options`}
+                        />
+                      )}
                     </div>
                   </>
                 );
@@ -1141,7 +1429,23 @@ function ChatPageContent() {
                     {checkboxSelections.upsellingQuarterToHalf && <li>Created quarter-to-half season upgrade path</li>}
                     {checkboxSelections.upsellingHalfToFull && <li>Enabled half-to-full season conversion opportunity</li>}
                     {checkboxSelections.crossSellAtRisk && <li>Cross-sell single game subscriptions to non-renewals</li>}
-                    <li>Implemented payment plans across all tiers</li>
+                    {(paymentPlans.plan1 || paymentPlans.plan2 || paymentPlans.plan3) && (
+                      <li>Offering {[
+                        paymentPlans.plan1 && '12-month',
+                        paymentPlans.plan2 && '9-month (recommended)',
+                        paymentPlans.plan3 && '6-month'
+                      ].filter(Boolean).join(', ')} payment plan options</li>
+                    )}
+                    {requireFullUpfront !== null && (
+                      <li>{requireFullUpfront ? 'Required full upfront payment for fans who missed deadlines' : 'Extended payment plans to all fans, including those who missed deadlines'}</li>
+                    )}
+                    {(optOutOptions.discountCredits || optOutOptions.offerHalfQuarter || optOutOptions.freeUpgrades) && (
+                      <li>Retention offers for opt-outs: {[
+                        optOutOptions.discountCredits && 'unused credit discounts',
+                        optOutOptions.offerHalfQuarter && 'partial season plans',
+                        optOutOptions.freeUpgrades && '3 free upgrades'
+                      ].filter(Boolean).join(', ')}</li>
+                    )}
                     <li>Multi-channel approach: email primary, SMS reminders</li>
                   </>
                 ) : (
