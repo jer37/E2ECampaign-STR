@@ -52,6 +52,49 @@ function ChatPageContent() {
   });
   const [optOutSubmitted, setOptOutSubmitted] = useState(false);
   const [generatingCampaign, setGeneratingCampaign] = useState(false);
+
+  // Pricing workflow state
+  const [pricingSliderValue, setPricingSliderValue] = useState(50);
+  const [pricingSliderSubmitted, setPricingSliderSubmitted] = useState(false);
+  const [showPricingHistoricalTable, setShowPricingHistoricalTable] = useState(false);
+  const [showPricingGoalQuestion, setShowPricingGoalQuestion] = useState(false);
+  const [selectedPackages, setSelectedPackages] = useState({
+    fullSeason: true,
+    halfSeason: true,
+    quarterSeason: true,
+    fiveGame: false,
+    flex: false,
+    singleGame: true,
+    group: false,
+  });
+  const [flexConfig, setFlexConfig] = useState({ gameCount: 10, fanChoice: true });
+  const [groupMinSize, setGroupMinSize] = useState(15);
+  const [packagesSubmitted, setPackagesSubmitted] = useState(false);
+  const [tierStructure, setTierStructure] = useState<'conservative' | 'balanced' | 'aggressive'>('balanced');
+  const [tierSubmitted, setTierSubmitted] = useState(false);
+  const [pricingConstraints, setPricingConstraints] = useState({
+    capYoY: false,
+    floorPrice: false,
+    matchSecondary: false,
+    maintainLadder: true,
+    premiumPricing: false,
+  });
+  const [maxYoYIncrease, setMaxYoYIncrease] = useState('8');
+  const [floorPriceAmount, setFloorPriceAmount] = useState('15');
+  const [premiumPct, setPremiumPct] = useState('40');
+  const [constraintsSubmitted, setConstraintsSubmitted] = useState(false);
+  const [benefitAllocations, setBenefitAllocations] = useState<Record<string, Record<string, boolean>>>({
+    playoffPriority: { fullSeason: true, halfSeason: true, quarterSeason: false, fiveGame: false, flex: false },
+    seatUpgrades: { fullSeason: true, halfSeason: true, quarterSeason: true, fiveGame: false, flex: false },
+    freeParking: { fullSeason: true, halfSeason: false, quarterSeason: false, fiveGame: false, flex: false },
+    merchCredit: { fullSeason: true, halfSeason: true, quarterSeason: false, fiveGame: false, flex: false },
+    ticketExchange: { fullSeason: true, halfSeason: true, quarterSeason: true, fiveGame: true, flex: false },
+    memberEvents: { fullSeason: true, halfSeason: true, quarterSeason: false, fiveGame: false, flex: false },
+    guestPasses: { fullSeason: true, halfSeason: false, quarterSeason: false, fiveGame: false, flex: false },
+  });
+  const [benefitsSubmitted, setBenefitsSubmitted] = useState(false);
+  const [generatingPricingCampaign, setGeneratingPricingCampaign] = useState(false);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Default user message or use recommendation prompt
@@ -64,12 +107,24 @@ function ChatPageContent() {
   // Check if ANY part of STR workflow (including after campaign generation)
   const isAnySTRWorkflow = workflowType === 'str';
 
+  // Check if this is Pricing workflow
+  const isPricingWorkflow = workflowType === 'pricing' && !generatingPricingCampaign;
+  const isAnyPricingWorkflow = workflowType === 'pricing';
+
   useEffect(() => {
     // For STR workflow, show items sequentially
     if (isAnySTRWorkflow) {
       setTimeout(() => setIsVisible(true), 100);
       setTimeout(() => setShowHistoricalTable(true), 800);
       setTimeout(() => setShowGoalQuestion(true), 1600);
+      return;
+    }
+
+    // For Pricing workflow, show items sequentially
+    if (isAnyPricingWorkflow) {
+      setTimeout(() => setIsVisible(true), 100);
+      setTimeout(() => setShowPricingHistoricalTable(true), 800);
+      setTimeout(() => setShowPricingGoalQuestion(true), 1600);
       return;
     }
 
@@ -113,14 +168,30 @@ function ChatPageContent() {
 
     // Auto-scroll to bottom
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [isAnySTRWorkflow]);
+  }, [isAnySTRWorkflow, isAnyPricingWorkflow]);
 
   const handleLaunchCampaign = () => {
-    // Extract campaign data from sidebar content
     let newCampaign;
 
-    if (generatingCampaign) {
-      // STR Workflow campaign data
+    if (generatingPricingCampaign) {
+      const revenueValue = (112.5 - (pricingSliderValue / 100) * 14.8).toFixed(1);
+      const sellThrough = Math.round(78 + (pricingSliderValue / 100) * 17);
+
+      newCampaign = {
+        title: '2026-27 On-Sale Pricing & Packaging',
+        description: `${Object.values(selectedPackages).filter(Boolean).length} package types, ${tierStructure} tiering, ${sellThrough}% sell-through target`,
+        status: 'Active' as const,
+        segment: 'All Ticket Buyers',
+        type: 'Pricing & Packaging',
+        actualRevenue: 0,
+        projectedRevenue: parseFloat(revenueValue) * 1000000,
+        delivered: 0,
+        opened: 0,
+        converted: 0,
+        lastEdited: `Last Edited ${new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} ${new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })} by Joel Resnicow`,
+        createdFrom: 'pricing-workflow',
+      };
+    } else if (generatingCampaign) {
       const revenueValue = (81.2 - (sliderValue / 100) * 10.1).toFixed(1);
       const renewalRate = Math.round(67 + (sliderValue / 100) * 20);
 
@@ -233,6 +304,156 @@ function ChatPageContent() {
 
   const strThinkingSteps = isSTRWorkflow ? generateSTRThinkingSteps() : [];
 
+  // Generate Pricing-specific thinking steps
+  const generatePricingThinkingSteps = () => {
+    const revenueValue = (112.5 - (pricingSliderValue / 100) * 14.8).toFixed(1);
+    const sellThrough = Math.round(78 + (pricingSliderValue / 100) * 17);
+    const tierLabel = tierStructure === 'conservative' ? '3' : tierStructure === 'balanced' ? '4' : '5';
+    const packageCount = Object.values(selectedPackages).filter(Boolean).length;
+
+    return [
+      {
+        genericText: "Analyzing historical ticket data...",
+        specificText: `Analyzing 3 seasons of data for 18,200 seats across 41 home games`,
+        reasoning: "Reviewing sell-through rates, revenue by package type, and secondary market performance to establish pricing baselines",
+        delay: 800,
+        duration: 1800,
+        transitionDelay: 900,
+      },
+      {
+        genericText: "Classifying home games into demand tiers...",
+        specificText: `Classifying 41 home games into ${tierLabel} demand tiers based on opponent strength, day of week, and historical demand`,
+        reasoning: `Using ${tierStructure} tiering to ${tierStructure === 'aggressive' ? 'maximize revenue capture with granular pricing' : tierStructure === 'conservative' ? 'keep pricing simple and fan-friendly' : 'balance revenue optimization with simplicity'}`,
+        delay: 2700,
+        duration: 1800,
+        transitionDelay: 900,
+      },
+      {
+        genericText: "Calculating per-seat pricing...",
+        specificText: `Calculating per-seat, per-game pricing across 6 arena price levels${pricingConstraints.capYoY ? ` with ${maxYoYIncrease}% max YoY increase cap` : ''}`,
+        reasoning: `Optimizing for ${pricingSliderValue < 40 ? 'revenue generation' : pricingSliderValue > 60 ? 'attendance maximization' : 'balanced revenue and attendance'}, applying pricing constraints`,
+        delay: 4600,
+        duration: 1800,
+        transitionDelay: 900,
+      },
+      {
+        genericText: "Modeling package discount ladder...",
+        specificText: `Modeling discount ladder across ${packageCount} package types`,
+        reasoning: "Full season holders receive 25% per-game discount; discount tapers to ensure commitment incentive at every tier",
+        delay: 6500,
+        duration: 1900,
+        transitionDelay: 900,
+      },
+      {
+        genericText: "Running cannibalization analysis...",
+        specificText: selectedPackages.fiveGame || selectedPackages.flex
+          ? `Running cannibalization analysis for new ${[selectedPackages.fiveGame && '5-game', selectedPackages.flex && 'flex'].filter(Boolean).join(' and ')} plan impact`
+          : "Validating package migration projections against historical data",
+        reasoning: selectedPackages.fiveGame || selectedPackages.flex
+          ? "Estimating net revenue impact of new package type introduction on existing plan holders"
+          : "Confirming current package mix optimizes revenue across all tiers",
+        delay: 8500,
+        duration: 1800,
+        transitionDelay: 900,
+      },
+      {
+        genericText: "Finalizing pricing manifest...",
+        specificText: `Finalizing pricing manifest and projecting $${revenueValue}MM total ticket revenue at ${sellThrough}% sell-through`,
+        reasoning: `Locking ${tierLabel} game tiers, ${packageCount} package types, and go-to-market timeline for Jun 1 on-sale`,
+        delay: 10400,
+        duration: 1900,
+        transitionDelay: 900,
+      },
+    ];
+  };
+
+  const pricingThinkingSteps = isPricingWorkflow ? generatePricingThinkingSteps() : [];
+
+  // Generate Pricing campaign content
+  const generatePricingCampaignContent = () => {
+    const revenueValue = (112.5 - (pricingSliderValue / 100) * 14.8).toFixed(1);
+    const sellThrough = Math.round(78 + (pricingSliderValue / 100) * 17);
+    const isRevenueFocused = pricingSliderValue < 40;
+    const isAttendanceFocused = pricingSliderValue > 60;
+    const tierLabel = tierStructure === 'conservative' ? '3' : tierStructure === 'balanced' ? '4' : '5';
+    const packageCount = Object.values(selectedPackages).filter(Boolean).length;
+
+    const tierDistributions: Record<string, { name: string; games: number; multiplier: string }[]> = {
+      conservative: [
+        { name: 'Standard', games: 18, multiplier: '1.0x' },
+        { name: 'Premium', games: 14, multiplier: isRevenueFocused ? '1.35x' : '1.25x' },
+        { name: 'Marquee', games: 9, multiplier: isRevenueFocused ? '1.75x' : '1.55x' },
+      ],
+      balanced: [
+        { name: 'Value', games: 8, multiplier: isAttendanceFocused ? '0.65x' : '0.70x' },
+        { name: 'Standard', games: 15, multiplier: '1.0x' },
+        { name: 'Premium', games: 11, multiplier: isRevenueFocused ? '1.35x' : '1.25x' },
+        { name: 'Marquee', games: 7, multiplier: isRevenueFocused ? '1.75x' : '1.60x' },
+      ],
+      aggressive: [
+        { name: 'Value', games: 5, multiplier: isAttendanceFocused ? '0.60x' : '0.65x' },
+        { name: 'Standard', games: 12, multiplier: '1.0x' },
+        { name: 'Premium', games: 12, multiplier: isRevenueFocused ? '1.35x' : '1.25x' },
+        { name: 'Marquee', games: 8, multiplier: isRevenueFocused ? '1.80x' : '1.65x' },
+        { name: 'Platinum', games: 4, multiplier: isRevenueFocused ? '2.10x' : '1.90x' },
+      ],
+    };
+
+    const priceLevels = [
+      { level: 'Courtside', sections: 'Rows 1-3', base: 485 },
+      { level: 'Lower Premium', sections: 'Sec 101-108', base: 145 },
+      { level: 'Lower Standard', sections: 'Sec 109-120', base: 95 },
+      { level: 'Club Level', sections: 'Sec 201-210', base: 120 },
+      { level: 'Upper Premium', sections: 'Sec 301-308', base: 55 },
+      { level: 'Upper Standard', sections: 'Sec 309-320', base: 32 },
+    ];
+
+    const discounts: Record<string, number> = {
+      fullSeason: 0.25,
+      halfSeason: 0.18,
+      quarterSeason: 0.12,
+      fiveGame: 0.07,
+      flex: 0.05,
+      singleGame: 0,
+    };
+
+    const packageLabels: Record<string, string> = {
+      fullSeason: 'Full Season (41)',
+      halfSeason: 'Half Season (20)',
+      quarterSeason: 'Quarter (10)',
+      fiveGame: '5-Game Mini',
+      flex: `Flex (${flexConfig.gameCount})`,
+      singleGame: 'Single Game',
+    };
+
+    const activePackageKeys = Object.entries(selectedPackages)
+      .filter(([key, val]) => val && key !== 'group')
+      .map(([key]) => key);
+
+    return {
+      tiers: tierDistributions[tierStructure],
+      priceLevels,
+      discounts,
+      packageLabels,
+      activePackageKeys,
+      revenueValue,
+      sellThrough,
+      tierLabel,
+      packageCount,
+      isRevenueFocused,
+      isAttendanceFocused,
+      intro: `Based on your ${isRevenueFocused ? 'revenue-focused' : isAttendanceFocused ? 'attendance-focused' : 'balanced'} strategy, I've configured on-sale pricing across 18,200 seats and 41 home games using ${tierLabel} demand tiers and ${packageCount} package types. ${pricingConstraints.capYoY ? `Year-over-year price increases are capped at ${maxYoYIncrease}%.` : ''} ${pricingConstraints.maintainLadder ? 'The discount ladder ensures full season holders always pay the least per game.' : ''} Projected total ticket revenue: $${revenueValue}MM at ${sellThrough}% sell-through.`,
+
+      strategy: `The ${tierStructure} tiering structure distributes games across ${tierLabel} demand levels based on opponent strength, day of week, and historical attendance. ${isRevenueFocused ? 'Revenue-optimized multipliers widen the spread between value and marquee games to capture maximum willingness-to-pay on premium matchups.' : isAttendanceFocused ? 'Attendance-optimized multipliers narrow the spread to keep even marquee games accessible, prioritizing sellouts and atmosphere.' : 'Balanced multipliers provide healthy revenue capture while keeping pricing accessible across the schedule.'}`,
+
+      cannibalization: selectedPackages.fiveGame || selectedPackages.flex
+        ? `Introducing ${[selectedPackages.fiveGame && 'the 5-Game Mini Plan' , selectedPackages.flex && 'Flex Plans'].filter(Boolean).join(' and ')} creates some migration risk from existing partial plan holders. Our analysis projects approximately 6-8% of current quarter season holders may downgrade to a 5-game plan, offset by an estimated 340 net-new 5-game plan buyers who would not have purchased a larger commitment. Net revenue impact: +$1.2MM from expanded buyer base.`
+        : null,
+
+      conclusion: `With ${tierLabel}-tier game classification, ${packageCount} package types, and the go-to-market timeline launching season plans April 1st through single game on-sale June 1st, this pricing configuration projects $${revenueValue}MM in total ticket revenue at ${sellThrough}% average sell-through. ${pricingConstraints.capYoY ? `The ${maxYoYIncrease}% YoY cap protects fan relationships while still growing revenue. ` : ''}Key risks include secondary market undercutting on low-demand games${selectedPackages.fiveGame ? ' and cannibalization from the new 5-game plan' : ''}. Dynamic pricing rules for single game tickets will adjust in real-time based on demand velocity.`,
+    };
+  };
+
   // Generate STR campaign content based on user selections
   const generateSTRCampaignContent = () => {
     const revenueValue = (81.2 - (sliderValue / 100) * 10.1).toFixed(1);
@@ -324,7 +545,7 @@ function ChatPageContent() {
   };
 
   useEffect(() => {
-    if (!isSTRWorkflow) {
+    if (!isSTRWorkflow && !isPricingWorkflow) {
       // Original thinking animation logic
       setTimeout(() => setIsVisible(true), 100);
       setTimeout(() => setIsThinking(true), 800);
@@ -357,10 +578,9 @@ function ChatPageContent() {
 
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     } else {
-      // For STR workflow, just show the interface immediately
       setTimeout(() => setIsVisible(true), 100);
     }
-  }, [isSTRWorkflow]);
+  }, [isSTRWorkflow, isPricingWorkflow]);
 
   // Handle STR campaign generation
   useEffect(() => {
@@ -395,6 +615,30 @@ function ChatPageContent() {
     }
   }, [generatingCampaign]);
 
+  // Handle Pricing campaign generation
+  useEffect(() => {
+    if (generatingPricingCampaign) {
+      const steps = generatePricingThinkingSteps();
+      setTimeout(() => setIsThinking(true), 500);
+
+      steps.forEach((step, index) => {
+        setTimeout(() => setActiveStep(index), step.delay);
+        setTimeout(() => setTransitionedSteps(prev => [...prev, index]), step.delay + step.transitionDelay);
+        setTimeout(() => {
+          setCompletedSteps(prev => [...prev, index]);
+          if (index < steps.length - 1) setActiveStep(index + 1);
+        }, step.delay + step.duration);
+      });
+
+      setTimeout(() => {
+        setIsThinking(false);
+        setShowText(true);
+      }, 12400);
+
+      setTimeout(() => setShowSidebar(true), 12900);
+    }
+  }, [generatingPricingCampaign]);
+
   return (
     <div className="h-[calc(100vh-56px)] flex relative" style={{
       backgroundImage: 'linear-gradient(135deg, rgba(76, 101, 240, 0.02) 0%, rgba(204, 255, 0, 0.01) 100%)'
@@ -404,8 +648,8 @@ function ChatPageContent() {
         {/* Messages Container */}
         <div className="flex-1 overflow-y-auto px-8 py-8">
           <div className="max-w-[624px] mx-auto space-y-6">
-            {/* User Message - Only show for non-STR workflows */}
-            {!isAnySTRWorkflow && (
+            {/* User Message - Only show for non-STR and non-Pricing workflows */}
+            {!isAnySTRWorkflow && !isAnyPricingWorkflow && (
               <div
                 className="flex justify-end transition-all duration-700"
                 style={{
@@ -968,6 +1212,509 @@ function ChatPageContent() {
               </div>
             )}
 
+            {/* ================================ */}
+            {/* PRICING WORKFLOW STEPS          */}
+            {/* ================================ */}
+
+            {/* Pricing Workflow - Greeting */}
+            {isAnyPricingWorkflow && (
+              <div
+                className="transition-all duration-700"
+                style={{
+                  opacity: isVisible ? 1 : 0,
+                  transform: isVisible ? 'translateY(0)' : 'translateY(20px)',
+                }}
+              >
+                <div className="mb-6">
+                  <p className="text-base text-black leading-[26px] tracking-tight mb-4">
+                    Hi there, let's configure your on-sale pricing and packaging
+                  </p>
+                  {showPricingHistoricalTable && (
+                    <p className="text-base text-[rgba(0,0,0,0.75)] leading-[26px] tracking-tight mb-4">
+                      Here's your ticket revenue performance and sell-through for the past 3 seasons:
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Pricing Workflow - Historical Performance Table */}
+            {isAnyPricingWorkflow && showPricingHistoricalTable && (
+              <div className="transition-all duration-700 mb-6" style={{ opacity: 1, transform: 'translateY(0)' }}>
+                <div className="bg-white border border-[rgba(0,0,0,0.1)] rounded-lg overflow-hidden mb-4">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="bg-[rgba(0,0,0,0.02)] border-b border-[rgba(0,0,0,0.1)]">
+                        <th className="text-left px-4 py-3 font-semibold text-[rgba(0,0,0,0.65)] tracking-tight">Season</th>
+                        <th className="text-left px-4 py-3 font-semibold text-[rgba(0,0,0,0.65)] tracking-tight">Avg Sell-Through</th>
+                        <th className="text-left px-4 py-3 font-semibold text-[rgba(0,0,0,0.65)] tracking-tight">Single Game</th>
+                        <th className="text-left px-4 py-3 font-semibold text-[rgba(0,0,0,0.65)] tracking-tight">Flex Plans</th>
+                        <th className="text-left px-4 py-3 font-semibold text-[rgba(0,0,0,0.65)] tracking-tight">Partial Plans</th>
+                        <th className="text-left px-4 py-3 font-semibold text-[rgba(0,0,0,0.65)] tracking-tight">Full Season</th>
+                        <th className="text-left px-4 py-3 font-semibold text-[rgba(0,0,0,0.65)] tracking-tight">Total Rev</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr className="border-b border-[rgba(0,0,0,0.08)]">
+                        <td className="px-4 py-3 font-medium text-black">2023</td>
+                        <td className="px-4 py-3 text-[rgba(0,0,0,0.75)]">81%</td>
+                        <td className="px-4 py-3 text-[rgba(0,0,0,0.75)]">$14.2MM</td>
+                        <td className="px-4 py-3 text-[rgba(0,0,0,0.75)]">$6.9MM</td>
+                        <td className="px-4 py-3 text-[rgba(0,0,0,0.75)]">$19.7MM</td>
+                        <td className="px-4 py-3 text-[rgba(0,0,0,0.75)]">$38.2MM</td>
+                        <td className="px-4 py-3 font-semibold text-black">$79.0MM</td>
+                      </tr>
+                      <tr className="border-b border-[rgba(0,0,0,0.08)]">
+                        <td className="px-4 py-3 font-medium text-black">2024</td>
+                        <td className="px-4 py-3 text-[rgba(0,0,0,0.75)]">84%</td>
+                        <td className="px-4 py-3 text-[rgba(0,0,0,0.75)]">$16.8MM</td>
+                        <td className="px-4 py-3 text-[rgba(0,0,0,0.75)]">$7.8MM</td>
+                        <td className="px-4 py-3 text-[rgba(0,0,0,0.75)]">$22.3MM</td>
+                        <td className="px-4 py-3 text-[rgba(0,0,0,0.75)]">$42.1MM</td>
+                        <td className="px-4 py-3 font-semibold text-black">$89.0MM</td>
+                      </tr>
+                      <tr>
+                        <td className="px-4 py-3 font-medium text-black">2025</td>
+                        <td className="px-4 py-3 text-[rgba(0,0,0,0.75)]">87%</td>
+                        <td className="px-4 py-3 text-[rgba(0,0,0,0.75)]">$19.1MM</td>
+                        <td className="px-4 py-3 text-[rgba(0,0,0,0.75)]">$8.4MM</td>
+                        <td className="px-4 py-3 text-[rgba(0,0,0,0.75)]">$24.6MM</td>
+                        <td className="px-4 py-3 text-[rgba(0,0,0,0.75)]">$46.8MM</td>
+                        <td className="px-4 py-3 font-semibold text-black">$98.9MM</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                {/* Secondary market insight */}
+                <div className="bg-[rgba(76,101,240,0.04)] border border-[rgba(76,101,240,0.15)] rounded-lg px-4 py-3 mb-6">
+                  <p className="text-sm text-[rgba(0,0,0,0.75)] tracking-tight">
+                    <span className="font-semibold text-[#4c65f0]">Secondary market insight:</span> Avg 112% of face value across all games last season.
+                    Top 10 games averaged 148% of face; bottom 10 averaged 74%.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Pricing Workflow - Goal Slider */}
+            {isAnyPricingWorkflow && showPricingGoalQuestion && (
+              <div className="transition-all duration-700" style={{ opacity: 1, transform: 'translateY(0)' }}>
+                <div className="mb-6">
+                  <p className="text-base text-[rgba(0,0,0,0.75)] leading-[26px] tracking-tight">
+                    What is your primary goal for this season's on-sale?
+                  </p>
+                </div>
+                <div className="bg-white border border-[rgba(0,0,0,0.1)] rounded-2xl p-8 space-y-8">
+                  <div className="flex justify-between items-start">
+                    <div className="text-left max-w-[200px]">
+                      <div className="text-base font-bold text-black tracking-tight mb-1">Maximize Revenue</div>
+                      <div className="text-sm text-[rgba(0,0,0,0.5)] leading-[20px]">Higher prices on premium inventory, accept lower fill rates</div>
+                    </div>
+                    <div className="text-right max-w-[200px]">
+                      <div className="text-base font-bold text-black tracking-tight mb-1">Maximize Attendance</div>
+                      <div className="text-sm text-[rgba(0,0,0,0.5)] leading-[20px]">Competitive pricing, prioritize sellouts and fan experience</div>
+                    </div>
+                  </div>
+                  <div className="relative">
+                    <input
+                      type="range" min="0" max="100"
+                      value={pricingSliderValue}
+                      onChange={(e) => setPricingSliderValue(parseInt(e.target.value))}
+                      className="w-full h-2 rounded-full appearance-none cursor-pointer slider-custom"
+                      style={{ background: 'linear-gradient(to right, #4c65f0 0%, #ccff00 100%)' }}
+                      disabled={pricingSliderSubmitted}
+                    />
+                  </div>
+                  <div className="flex justify-center gap-16 pt-4">
+                    <div className="text-center">
+                      <div className="text-sm font-semibold text-[rgba(0,0,0,0.5)] tracking-tight mb-2">Forecasted Total Revenue</div>
+                      <div className="text-3xl font-bold text-black tracking-tight">
+                        ${(112.5 - (pricingSliderValue / 100) * 14.8).toFixed(1)}MM
+                      </div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-sm font-semibold text-[rgba(0,0,0,0.5)] tracking-tight mb-2">Forecasted Avg Sell-Through</div>
+                      <div className="text-3xl font-bold text-black tracking-tight">
+                        {Math.round(78 + (pricingSliderValue / 100) * 17)}%
+                      </div>
+                    </div>
+                  </div>
+                  {!pricingSliderSubmitted && (
+                    <div className="flex justify-center pt-4">
+                      <button
+                        onClick={() => setPricingSliderSubmitted(true)}
+                        className="bg-[#4c65f0] hover:bg-[#3d52c9] text-white px-10 py-3 rounded-full font-semibold text-base tracking-tight transition-all hover:scale-105 shadow-lg"
+                      >
+                        Continue
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Pricing Workflow - Package Selection */}
+            {isAnyPricingWorkflow && pricingSliderSubmitted && (
+              <div className="transition-all duration-700" style={{ opacity: 1, transform: 'translateY(0)' }}>
+                <div className="mb-6">
+                  <p className="text-base text-black leading-[26px] tracking-tight mb-6">
+                    Which package types do you want to offer this season?
+                  </p>
+                </div>
+                <div className="bg-white border border-[rgba(0,0,0,0.1)] rounded-2xl p-8 space-y-4">
+                  {[
+                    { key: 'fullSeason', label: 'Full Season Plan (41 games)', desc: null, defaultOn: true },
+                    { key: 'halfSeason', label: 'Half Season Plan (20 games)', desc: null, defaultOn: true },
+                    { key: 'quarterSeason', label: 'Quarter Season Plan (10 games)', desc: null, defaultOn: true },
+                    { key: 'fiveGame', label: '5-Game Mini Plan', desc: 'New offering — attracts first-time plan buyers', defaultOn: false },
+                    { key: 'flex', label: 'Flex Plan (choose-your-own games)', desc: null, defaultOn: false },
+                    { key: 'singleGame', label: 'Single Game Tickets', desc: null, defaultOn: true },
+                    { key: 'group', label: 'Group Packages (15+ tickets)', desc: null, defaultOn: false },
+                  ].map((pkg) => (
+                    <div key={pkg.key}>
+                      <label className="flex items-start gap-3 cursor-pointer group p-3 rounded-lg hover:bg-[rgba(76,101,240,0.03)] transition-colors">
+                        <input
+                          type="checkbox"
+                          checked={selectedPackages[pkg.key as keyof typeof selectedPackages]}
+                          onChange={(e) => setSelectedPackages({ ...selectedPackages, [pkg.key]: e.target.checked })}
+                          disabled={packagesSubmitted}
+                          className="w-5 h-5 mt-0.5 rounded border-2 border-[rgba(0,0,0,0.3)] text-[#4c65f0] focus:ring-[#4c65f0] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                        />
+                        <div>
+                          <span className="text-base text-black tracking-tight group-hover:text-[#4c65f0] transition-colors">
+                            {pkg.label}
+                          </span>
+                          {pkg.desc && (
+                            <p className="text-sm text-[rgba(0,0,0,0.5)] mt-0.5">{pkg.desc}</p>
+                          )}
+                        </div>
+                      </label>
+
+                      {/* Flex config */}
+                      {pkg.key === 'flex' && selectedPackages.flex && !packagesSubmitted && (
+                        <div className="ml-11 mt-2 flex items-center gap-4 text-sm">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[rgba(0,0,0,0.65)]">Games:</span>
+                            <select
+                              value={flexConfig.gameCount}
+                              onChange={(e) => setFlexConfig({ ...flexConfig, gameCount: parseInt(e.target.value) })}
+                              className="border border-[rgba(0,0,0,0.23)] rounded px-2 py-1 text-sm focus:outline-none focus:border-[#4c65f0]"
+                            >
+                              {[5, 10, 15, 20].map((n) => <option key={n} value={n}>{n}</option>)}
+                            </select>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[rgba(0,0,0,0.65)]">Fan picks games?</span>
+                            <button
+                              onClick={() => setFlexConfig({ ...flexConfig, fanChoice: !flexConfig.fanChoice })}
+                              className={`px-3 py-1 rounded text-sm font-semibold transition-colors ${flexConfig.fanChoice ? 'bg-[#4c65f0] text-white' : 'bg-[rgba(0,0,0,0.08)] text-black'}`}
+                            >
+                              {flexConfig.fanChoice ? 'Yes' : 'No'}
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Group min size */}
+                      {pkg.key === 'group' && selectedPackages.group && !packagesSubmitted && (
+                        <div className="ml-11 mt-2 flex items-center gap-2 text-sm">
+                          <span className="text-[rgba(0,0,0,0.65)]">Min group size:</span>
+                          <input
+                            type="number" min="5" max="100"
+                            value={groupMinSize}
+                            onChange={(e) => setGroupMinSize(parseInt(e.target.value) || 15)}
+                            className="w-16 border border-[rgba(0,0,0,0.23)] rounded px-2 py-1 text-sm focus:outline-none focus:border-[#4c65f0]"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+
+                  {!packagesSubmitted && (
+                    <div className="flex justify-center pt-4">
+                      <button
+                        onClick={() => setPackagesSubmitted(true)}
+                        className="bg-[#4c65f0] hover:bg-[#3d52c9] text-white px-10 py-3 rounded-full font-semibold text-base tracking-tight transition-all hover:scale-105 shadow-lg"
+                      >
+                        Continue
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Pricing Workflow - Game Tiering */}
+            {isAnyPricingWorkflow && packagesSubmitted && (
+              <div className="transition-all duration-700" style={{ opacity: 1, transform: 'translateY(0)' }}>
+                <div className="mb-6">
+                  <p className="text-base text-black leading-[26px] tracking-tight mb-6">
+                    How do you want to tier your home games for pricing purposes?
+                  </p>
+                </div>
+                <div className="bg-white border border-[rgba(0,0,0,0.1)] rounded-2xl p-8 space-y-4">
+                  {([
+                    { value: 'conservative' as const, label: 'Conservative (3 tiers)', desc: 'Standard, Premium, Marquee — Simpler for fans; less revenue optimization', preview: 'Standard (18) • Premium (14) • Marquee (9)' },
+                    { value: 'balanced' as const, label: 'Balanced (4 tiers)', desc: 'Value, Standard, Premium, Marquee — Good balance of simplicity and revenue capture', preview: 'Value (8) • Standard (15) • Premium (11) • Marquee (7)', recommended: true },
+                    { value: 'aggressive' as const, label: 'Aggressive (5 tiers)', desc: 'Value, Standard, Premium, Marquee, Platinum — Maximum revenue optimization', preview: 'Value (5) • Standard (12) • Premium (12) • Marquee (8) • Platinum (4)' },
+                  ]).map((tier) => (
+                    <label
+                      key={tier.value}
+                      className={`flex items-start gap-4 cursor-pointer p-4 rounded-lg transition-colors ${
+                        tier.recommended && tierStructure === tier.value ? 'border-2 border-[#4c65f0] bg-[rgba(76,101,240,0.02)]' :
+                        tierStructure === tier.value ? 'border-2 border-[#4c65f0] bg-[rgba(76,101,240,0.02)]' :
+                        'border-2 border-transparent hover:bg-[rgba(76,101,240,0.03)]'
+                      }`}
+                    >
+                      <input
+                        type="radio" name="tierStructure"
+                        checked={tierStructure === tier.value}
+                        onChange={() => setTierStructure(tier.value)}
+                        disabled={tierSubmitted}
+                        className="w-5 h-5 mt-0.5 text-[#4c65f0] focus:ring-[#4c65f0] cursor-pointer disabled:opacity-50"
+                      />
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-base font-semibold text-black tracking-tight">{tier.label}</span>
+                          {tier.recommended && (
+                            <span className="text-xs font-bold text-[#4c65f0] bg-[rgba(76,101,240,0.1)] px-2 py-1 rounded">RECOMMENDED</span>
+                          )}
+                        </div>
+                        <p className="text-sm text-[rgba(0,0,0,0.5)] mt-1">{tier.desc}</p>
+                        {tierStructure === tier.value && (
+                          <p className="text-sm text-[#4c65f0] mt-2 font-medium">{tier.preview}</p>
+                        )}
+                      </div>
+                    </label>
+                  ))}
+
+                  {!tierSubmitted && (
+                    <div className="flex justify-center pt-4">
+                      <button
+                        onClick={() => setTierSubmitted(true)}
+                        className="bg-[#4c65f0] hover:bg-[#3d52c9] text-white px-10 py-3 rounded-full font-semibold text-base tracking-tight transition-all hover:scale-105 shadow-lg"
+                      >
+                        Continue
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Pricing Workflow - Pricing Constraints */}
+            {isAnyPricingWorkflow && tierSubmitted && (
+              <div className="transition-all duration-700" style={{ opacity: 1, transform: 'translateY(0)' }}>
+                <div className="mb-6">
+                  <p className="text-base text-black leading-[26px] tracking-tight mb-6">
+                    What pricing constraints do you want to apply?
+                  </p>
+                </div>
+                <div className="bg-white border border-[rgba(0,0,0,0.1)] rounded-2xl p-8 space-y-6">
+                  {/* Cap YoY */}
+                  <div className="space-y-3">
+                    <label className="flex items-start gap-3 cursor-pointer group">
+                      <input
+                        type="checkbox"
+                        checked={pricingConstraints.capYoY}
+                        onChange={(e) => setPricingConstraints({ ...pricingConstraints, capYoY: e.target.checked })}
+                        disabled={constraintsSubmitted}
+                        className="w-5 h-5 mt-0.5 rounded border-2 border-[rgba(0,0,0,0.3)] text-[#4c65f0] focus:ring-[#4c65f0] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                      />
+                      <span className="text-base text-black tracking-tight group-hover:text-[#4c65f0] transition-colors">
+                        Cap year-over-year price increase
+                      </span>
+                    </label>
+                    {pricingConstraints.capYoY && !constraintsSubmitted && (
+                      <div className="ml-8 flex items-center gap-3">
+                        <span className="text-sm text-[rgba(0,0,0,0.65)]">Maximum increase:</span>
+                        <div className="relative">
+                          <input type="number" min="0" max="50" value={maxYoYIncrease}
+                            onChange={(e) => setMaxYoYIncrease(e.target.value)}
+                            className="w-20 px-3 py-2 border border-[rgba(0,0,0,0.23)] rounded text-base text-black focus:outline-none focus:border-[#4c65f0] focus:border-2"
+                          />
+                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-base text-[rgba(0,0,0,0.5)]">%</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Floor Price */}
+                  <div className="space-y-3">
+                    <label className="flex items-start gap-3 cursor-pointer group">
+                      <input
+                        type="checkbox"
+                        checked={pricingConstraints.floorPrice}
+                        onChange={(e) => setPricingConstraints({ ...pricingConstraints, floorPrice: e.target.checked })}
+                        disabled={constraintsSubmitted}
+                        className="w-5 h-5 mt-0.5 rounded border-2 border-[rgba(0,0,0,0.3)] text-[#4c65f0] focus:ring-[#4c65f0] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                      />
+                      <span className="text-base text-black tracking-tight group-hover:text-[#4c65f0] transition-colors">
+                        Set a floor price (minimum per-ticket price)
+                      </span>
+                    </label>
+                    {pricingConstraints.floorPrice && !constraintsSubmitted && (
+                      <div className="ml-8 flex items-center gap-3">
+                        <span className="text-sm text-[rgba(0,0,0,0.65)]">Minimum price:</span>
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-base text-[rgba(0,0,0,0.5)]">$</span>
+                          <input type="number" min="1" max="100" value={floorPriceAmount}
+                            onChange={(e) => setFloorPriceAmount(e.target.value)}
+                            className="w-20 pl-7 pr-3 py-2 border border-[rgba(0,0,0,0.23)] rounded text-base text-black focus:outline-none focus:border-[#4c65f0] focus:border-2"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Match Secondary */}
+                  <label className="flex items-start gap-3 cursor-pointer group">
+                    <input
+                      type="checkbox"
+                      checked={pricingConstraints.matchSecondary}
+                      onChange={(e) => setPricingConstraints({ ...pricingConstraints, matchSecondary: e.target.checked })}
+                      disabled={constraintsSubmitted}
+                      className="w-5 h-5 mt-0.5 rounded border-2 border-[rgba(0,0,0,0.3)] text-[#4c65f0] focus:ring-[#4c65f0] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    />
+                    <div>
+                      <span className="text-base text-black tracking-tight group-hover:text-[#4c65f0] transition-colors">
+                        Price match or undercut secondary market for low-demand games
+                      </span>
+                      <p className="text-sm text-[rgba(0,0,0,0.5)] mt-0.5">Reduce unsold inventory by competing with resale market</p>
+                    </div>
+                  </label>
+
+                  {/* Maintain Ladder */}
+                  <label className="flex items-start gap-3 cursor-pointer group p-4 rounded-lg border-2 border-[#4c65f0] bg-[rgba(76,101,240,0.02)]">
+                    <input
+                      type="checkbox"
+                      checked={pricingConstraints.maintainLadder}
+                      onChange={(e) => setPricingConstraints({ ...pricingConstraints, maintainLadder: e.target.checked })}
+                      disabled={constraintsSubmitted}
+                      className="w-5 h-5 mt-0.5 rounded border-2 border-[rgba(0,0,0,0.3)] text-[#4c65f0] focus:ring-[#4c65f0] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    />
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-base text-black tracking-tight">Maintain season-plan discount ladder</span>
+                        <span className="text-xs font-bold text-[#4c65f0] bg-[rgba(76,101,240,0.1)] px-2 py-1 rounded">RECOMMENDED</span>
+                      </div>
+                      <p className="text-sm text-[rgba(0,0,0,0.5)] mt-0.5">Full season holders always pay less per game than partial, flex, and single-game buyers</p>
+                    </div>
+                  </label>
+
+                  {/* Premium Pricing */}
+                  <div className="space-y-3">
+                    <label className="flex items-start gap-3 cursor-pointer group">
+                      <input
+                        type="checkbox"
+                        checked={pricingConstraints.premiumPricing}
+                        onChange={(e) => setPricingConstraints({ ...pricingConstraints, premiumPricing: e.target.checked })}
+                        disabled={constraintsSubmitted}
+                        className="w-5 h-5 mt-0.5 rounded border-2 border-[rgba(0,0,0,0.3)] text-[#4c65f0] focus:ring-[#4c65f0] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                      />
+                      <span className="text-base text-black tracking-tight group-hover:text-[#4c65f0] transition-colors">
+                        Premium section pricing premium
+                      </span>
+                    </label>
+                    {pricingConstraints.premiumPricing && !constraintsSubmitted && (
+                      <div className="ml-8 flex items-center gap-3">
+                        <span className="text-sm text-[rgba(0,0,0,0.65)]">Premium % over standard:</span>
+                        <div className="relative">
+                          <input type="number" min="0" max="200" value={premiumPct}
+                            onChange={(e) => setPremiumPct(e.target.value)}
+                            className="w-20 px-3 py-2 border border-[rgba(0,0,0,0.23)] rounded text-base text-black focus:outline-none focus:border-[#4c65f0] focus:border-2"
+                          />
+                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-base text-[rgba(0,0,0,0.5)]">%</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {!constraintsSubmitted && (
+                    <div className="flex justify-center pt-4">
+                      <button
+                        onClick={() => setConstraintsSubmitted(true)}
+                        className="bg-[#4c65f0] hover:bg-[#3d52c9] text-white px-10 py-3 rounded-full font-semibold text-base tracking-tight transition-all hover:scale-105 shadow-lg"
+                      >
+                        Continue
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Pricing Workflow - Benefits & Perks */}
+            {isAnyPricingWorkflow && constraintsSubmitted && (
+              <div className="transition-all duration-700" style={{ opacity: 1, transform: 'translateY(0)' }}>
+                <div className="mb-6">
+                  <p className="text-base text-black leading-[26px] tracking-tight mb-6">
+                    What benefits do you want to include with plan packages?
+                  </p>
+                </div>
+                <div className="bg-white border border-[rgba(0,0,0,0.1)] rounded-2xl p-6 overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-[rgba(0,0,0,0.1)]">
+                        <th className="text-left px-3 py-3 font-semibold text-[rgba(0,0,0,0.65)] tracking-tight">Benefit</th>
+                        {selectedPackages.fullSeason && <th className="text-center px-3 py-3 font-semibold text-[rgba(0,0,0,0.65)] tracking-tight">Full</th>}
+                        {selectedPackages.halfSeason && <th className="text-center px-3 py-3 font-semibold text-[rgba(0,0,0,0.65)] tracking-tight">Half</th>}
+                        {selectedPackages.quarterSeason && <th className="text-center px-3 py-3 font-semibold text-[rgba(0,0,0,0.65)] tracking-tight">Quarter</th>}
+                        {selectedPackages.fiveGame && <th className="text-center px-3 py-3 font-semibold text-[rgba(0,0,0,0.65)] tracking-tight">5-Game</th>}
+                        {selectedPackages.flex && <th className="text-center px-3 py-3 font-semibold text-[rgba(0,0,0,0.65)] tracking-tight">Flex</th>}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {([
+                        { key: 'playoffPriority', label: 'Playoff ticket priority' },
+                        { key: 'seatUpgrades', label: 'Seat upgrade opportunities' },
+                        { key: 'freeParking', label: 'Free parking passes' },
+                        { key: 'merchCredit', label: 'Merchandise credit' },
+                        { key: 'ticketExchange', label: 'Ticket exchange privileges' },
+                        { key: 'memberEvents', label: 'Exclusive member events' },
+                        { key: 'guestPasses', label: 'Guest pass allocation' },
+                      ]).map((benefit) => (
+                        <tr key={benefit.key} className="border-b border-[rgba(0,0,0,0.06)]">
+                          <td className="px-3 py-3 text-black tracking-tight">{benefit.label}</td>
+                          {(['fullSeason', 'halfSeason', 'quarterSeason', 'fiveGame', 'flex'] as const).map((pkg) =>
+                            selectedPackages[pkg] ? (
+                              <td key={pkg} className="text-center px-3 py-3">
+                                <input
+                                  type="checkbox"
+                                  checked={benefitAllocations[benefit.key]?.[pkg] ?? false}
+                                  onChange={(e) => {
+                                    setBenefitAllocations((prev) => ({
+                                      ...prev,
+                                      [benefit.key]: { ...prev[benefit.key], [pkg]: e.target.checked },
+                                    }));
+                                  }}
+                                  disabled={benefitsSubmitted}
+                                  className="w-4 h-4 rounded border-2 border-[rgba(0,0,0,0.3)] text-[#4c65f0] focus:ring-[#4c65f0] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                />
+                              </td>
+                            ) : null
+                          )}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+
+                  {!benefitsSubmitted && (
+                    <div className="flex justify-center pt-6">
+                      <button
+                        onClick={() => {
+                          setBenefitsSubmitted(true);
+                          setGeneratingPricingCampaign(true);
+                        }}
+                        className="bg-[#4c65f0] hover:bg-[#3d52c9] text-white px-10 py-3 rounded-full font-semibold text-base tracking-tight transition-all hover:scale-105 shadow-lg"
+                      >
+                        Continue
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Thinking Module */}
             {isThinking && (
               <div className="bg-white/80 backdrop-blur-sm border border-[rgba(76,101,240,0.2)] rounded-2xl p-6 shadow-2xl animate-fade-in" style={{
@@ -983,9 +1730,11 @@ function ChatPageContent() {
                     <div className="absolute inset-0 rounded-full bg-[#4c65f0] opacity-30 animate-ping"></div>
                   </div>
                   <div className="flex-1">
-                    <h3 className="text-base font-semibold text-black tracking-tight">Building Campaign Strategy</h3>
+                    <h3 className="text-base font-semibold text-black tracking-tight">
+                      {generatingPricingCampaign ? 'Building Pricing Strategy' : 'Building Campaign Strategy'}
+                    </h3>
                     <p className="text-xs text-[rgba(0,0,0,0.5)] tracking-tight">
-                      Step {Math.min(activeStep + 1, (generatingCampaign ? strThinkingSteps : thinkingSteps).length)} of {(generatingCampaign ? strThinkingSteps : thinkingSteps).length}
+                      Step {Math.min(activeStep + 1, (generatingPricingCampaign ? generatePricingThinkingSteps() : generatingCampaign ? strThinkingSteps : thinkingSteps).length)} of {(generatingPricingCampaign ? generatePricingThinkingSteps() : generatingCampaign ? strThinkingSteps : thinkingSteps).length}
                     </p>
                   </div>
                 </div>
@@ -995,13 +1744,13 @@ function ChatPageContent() {
                   <div
                     className="h-full bg-gradient-to-r from-[#4c65f0] to-[#657dff] transition-all duration-500 ease-out"
                     style={{
-                      width: `${((completedSteps.length) / (generatingCampaign ? strThinkingSteps : thinkingSteps).length) * 100}%`
+                      width: `${((completedSteps.length) / (generatingPricingCampaign ? generatePricingThinkingSteps() : generatingCampaign ? strThinkingSteps : thinkingSteps).length) * 100}%`
                     }}
                   ></div>
                 </div>
 
                 <div className="space-y-4">
-                  {(generatingCampaign ? strThinkingSteps : thinkingSteps).map((step, index) => {
+                  {(generatingPricingCampaign ? generatePricingThinkingSteps() : generatingCampaign ? strThinkingSteps : thinkingSteps).map((step, index) => {
                     const isActive = activeStep === index;
                     const isCompleted = completedSteps.includes(index);
                     const hasTransitioned = transitionedSteps.includes(index);
@@ -1108,8 +1857,229 @@ function ChatPageContent() {
               </div>
             )}
 
+            {/* Pricing Campaign Response */}
+            {showText && generatingPricingCampaign && (
+              <div className="space-y-6">
+                {(() => {
+                  const pc = generatePricingCampaignContent();
+                  return (
+                    <>
+                      {/* Intro */}
+                      <div className="text-sm text-black leading-[22px] tracking-tight animate-fade-in" style={{ animationDelay: '0ms' }}>
+                        <p>{pc.intro}</p>
+                      </div>
+
+                      {/* Game Tier Table */}
+                      <div className="bg-white border border-[rgba(0,0,0,0.1)] rounded overflow-hidden animate-fade-in" style={{ animationDelay: '300ms' }}>
+                        <div className="bg-[rgba(0,0,0,0.02)] border-b border-[rgba(0,0,0,0.1)] px-4 py-3 flex items-center gap-2">
+                          <span className="text-xs font-semibold text-[rgba(0,0,0,0.65)] tracking-tight">Game Tier Classification — 41 Home Games</span>
+                        </div>
+                        <div className="bg-white border-b border-[rgba(0,0,0,0.1)] px-4 py-2 grid grid-cols-4 gap-2 text-xs font-semibold text-[rgba(0,0,0,0.65)] tracking-tight">
+                          <div>Tier</div>
+                          <div>Games</div>
+                          <div>Example Matchups</div>
+                          <div>Multiplier</div>
+                        </div>
+                        {pc.tiers.map((tier, i) => {
+                          const examples: Record<string, string> = {
+                            Platinum: 'Christmas Day, Opening Night',
+                            Marquee: 'vs. Lakers, Warriors, Celtics',
+                            Premium: 'vs. Knicks, 76ers, weekends',
+                            Standard: 'vs. Pacers, Hornets, weeknights',
+                            Value: 'vs. Wizards, Pistons, Tue/Wed',
+                          };
+                          return (
+                            <div key={i} className={`px-4 py-3 ${i < pc.tiers.length - 1 ? 'border-b border-[rgba(0,0,0,0.08)]' : ''} grid grid-cols-4 gap-2 text-sm tracking-tight`}>
+                              <div className="font-semibold">{tier.name}</div>
+                              <div>{tier.games} games</div>
+                              <div className="text-[rgba(0,0,0,0.65)]">{examples[tier.name] || ''}</div>
+                              <div className="text-[#4c65f0] font-semibold">{tier.multiplier}</div>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {/* Pricing Manifest Table */}
+                      <div className="bg-white border border-[rgba(0,0,0,0.1)] rounded overflow-hidden animate-fade-in" style={{ animationDelay: '600ms' }}>
+                        <div className="bg-[rgba(0,0,0,0.02)] border-b border-[rgba(0,0,0,0.1)] px-4 py-3">
+                          <span className="text-xs font-semibold text-[rgba(0,0,0,0.65)] tracking-tight">Pricing Manifest — Per-Game Price by Section & Package</span>
+                        </div>
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-sm">
+                            <thead>
+                              <tr className="border-b border-[rgba(0,0,0,0.1)]">
+                                <th className="text-left px-3 py-2 text-xs font-semibold text-[rgba(0,0,0,0.65)] tracking-tight">Price Level</th>
+                                <th className="text-left px-3 py-2 text-xs font-semibold text-[rgba(0,0,0,0.65)] tracking-tight">Sections</th>
+                                {pc.activePackageKeys.map((key) => (
+                                  <th key={key} className="text-right px-3 py-2 text-xs font-semibold text-[rgba(0,0,0,0.65)] tracking-tight">
+                                    {pc.packageLabels[key]}
+                                  </th>
+                                ))}
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {pc.priceLevels.map((pl, i) => (
+                                <tr key={i} className={i < pc.priceLevels.length - 1 ? 'border-b border-[rgba(0,0,0,0.06)]' : ''}>
+                                  <td className="px-3 py-2 font-semibold text-black">{pl.level}</td>
+                                  <td className="px-3 py-2 text-[rgba(0,0,0,0.65)]">{pl.sections}</td>
+                                  {pc.activePackageKeys.map((key) => {
+                                    const discount = pc.discounts[key] || 0;
+                                    const price = Math.round(pl.base * (1 - discount));
+                                    return (
+                                      <td key={key} className="text-right px-3 py-2 font-medium">
+                                        ${price}
+                                      </td>
+                                    );
+                                  })}
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+
+                      {/* Strategy */}
+                      <div className="text-sm text-black leading-[22px] tracking-tight animate-fade-in" style={{ animationDelay: '900ms' }}>
+                        <p>{pc.strategy}</p>
+                      </div>
+
+                      {/* Package Menu Card */}
+                      <div className="bg-white border border-[rgba(0,0,0,0.1)] rounded overflow-hidden animate-fade-in" style={{ animationDelay: '1200ms' }}>
+                        <div className="bg-[rgba(0,0,0,0.02)] border-b border-[rgba(0,0,0,0.1)] px-4 py-3">
+                          <span className="text-xs font-semibold text-[rgba(0,0,0,0.65)] tracking-tight">Package Menu & Discount Ladder</span>
+                        </div>
+                        <div className="px-4 py-3 space-y-3">
+                          {pc.activePackageKeys.map((key) => {
+                            const disc = pc.discounts[key] || 0;
+                            const discPct = Math.round(disc * 100);
+                            const benefitList = Object.entries(benefitAllocations)
+                              .filter(([, pkgs]) => pkgs[key])
+                              .map(([benefitKey]) => {
+                                const labels: Record<string, string> = {
+                                  playoffPriority: 'Playoff priority',
+                                  seatUpgrades: 'Seat upgrades',
+                                  freeParking: 'Parking',
+                                  merchCredit: 'Merch credit',
+                                  ticketExchange: 'Ticket exchange',
+                                  memberEvents: 'Member events',
+                                  guestPasses: 'Guest passes',
+                                };
+                                return labels[benefitKey] || benefitKey;
+                              });
+                            return (
+                              <div key={key} className="flex items-center gap-4 p-3 rounded-lg bg-[rgba(0,0,0,0.02)]">
+                                <div className="flex-1">
+                                  <div className="font-semibold text-black text-sm">{pc.packageLabels[key]}</div>
+                                  {benefitList.length > 0 && (
+                                    <div className="text-xs text-[rgba(0,0,0,0.55)] mt-0.5">{benefitList.join(' • ')}</div>
+                                  )}
+                                </div>
+                                <div className="text-right">
+                                  <div className="text-sm font-bold text-[#007a47]">
+                                    {discPct > 0 ? `${discPct}% savings` : 'Full price'}
+                                  </div>
+                                  <div className="text-xs text-[rgba(0,0,0,0.5)]">vs. single game</div>
+                                </div>
+                                {/* Mini bar */}
+                                <div className="w-24 h-2 bg-[rgba(0,0,0,0.06)] rounded-full overflow-hidden">
+                                  <div className="h-full rounded-full bg-[#4c65f0]" style={{ width: `${100 - discPct * 2.5}%` }} />
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Cannibalization */}
+                      {pc.cannibalization && (
+                        <div className="bg-white border border-[rgba(0,0,0,0.1)] rounded overflow-hidden animate-fade-in" style={{ animationDelay: '1500ms' }}>
+                          <div className="bg-[rgba(0,0,0,0.02)] border-b border-[rgba(0,0,0,0.1)] px-4 py-3">
+                            <span className="text-xs font-semibold text-[rgba(0,0,0,0.65)] tracking-tight">Package Migration Forecast</span>
+                          </div>
+                          <div className="px-4 py-3 text-sm text-black tracking-tight leading-[22px]">
+                            <p>{pc.cannibalization}</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Revenue Projection Card */}
+                      <div className="bg-white border border-[rgba(0,0,0,0.1)] rounded overflow-hidden animate-fade-in" style={{ animationDelay: '1800ms' }}>
+                        <div className="bg-[rgba(0,0,0,0.02)] border-b border-[rgba(0,0,0,0.1)] px-4 py-3">
+                          <span className="text-xs font-semibold text-[rgba(0,0,0,0.65)] tracking-tight">Revenue Forecast</span>
+                        </div>
+                        <div className="px-4 py-4">
+                          <div className="flex items-center gap-8 mb-4">
+                            <div>
+                              <div className="text-2xl font-bold text-[#007a47]">${pc.revenueValue}MM</div>
+                              <div className="text-xs text-[rgba(0,0,0,0.5)]">Projected total ticket revenue</div>
+                            </div>
+                            <div>
+                              <div className="text-2xl font-bold text-black">{pc.sellThrough}%</div>
+                              <div className="text-xs text-[rgba(0,0,0,0.5)]">Avg sell-through</div>
+                            </div>
+                            <div>
+                              <div className="text-2xl font-bold text-[#4c65f0]">+{Math.round((parseFloat(pc.revenueValue) / 98.9 - 1) * 100)}%</div>
+                              <div className="text-xs text-[rgba(0,0,0,0.5)]">YoY growth</div>
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-3 gap-3 text-sm">
+                            <div className="bg-[rgba(0,0,0,0.03)] rounded p-3 text-center">
+                              <div className="font-semibold text-[rgba(0,0,0,0.5)] text-xs mb-1">Best Case</div>
+                              <div className="font-bold text-[#007a47]">${(parseFloat(pc.revenueValue) * 1.08).toFixed(1)}MM</div>
+                            </div>
+                            <div className="bg-[rgba(76,101,240,0.05)] rounded p-3 text-center border border-[rgba(76,101,240,0.15)]">
+                              <div className="font-semibold text-[#4c65f0] text-xs mb-1">Base Case</div>
+                              <div className="font-bold text-black">${pc.revenueValue}MM</div>
+                            </div>
+                            <div className="bg-[rgba(0,0,0,0.03)] rounded p-3 text-center">
+                              <div className="font-semibold text-[rgba(0,0,0,0.5)] text-xs mb-1">Worst Case</div>
+                              <div className="font-bold text-[#d32f2f]">${(parseFloat(pc.revenueValue) * 0.91).toFixed(1)}MM</div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Go-to-Market Timeline */}
+                      <div className="bg-white border border-[rgba(0,0,0,0.1)] rounded overflow-hidden animate-fade-in" style={{ animationDelay: '2100ms' }}>
+                        <div className="bg-[rgba(0,0,0,0.02)] border-b border-[rgba(0,0,0,0.1)] px-4 py-3">
+                          <span className="text-xs font-semibold text-[rgba(0,0,0,0.65)] tracking-tight">Go-to-Market Timeline</span>
+                        </div>
+                        <div className="px-4 py-3 space-y-3">
+                          {[
+                            { phase: '1', label: 'Season plan renewals', dates: 'Completed', status: 'done' },
+                            { phase: '2', label: 'New full season plans', dates: 'Apr 1–15', status: 'upcoming' },
+                            { phase: '3', label: 'Half & quarter season plans', dates: 'Apr 15–30', status: 'upcoming' },
+                            ...(selectedPackages.fiveGame || selectedPackages.flex ? [{ phase: '4', label: `${[selectedPackages.fiveGame && '5-game', selectedPackages.flex && 'flex'].filter(Boolean).join(' & ')} plans`, dates: 'May 1–15', status: 'upcoming' }] : []),
+                            { phase: selectedPackages.fiveGame || selectedPackages.flex ? '5' : '4', label: 'Single game on-sale', dates: 'Jun 1', status: 'upcoming' },
+                            { phase: selectedPackages.fiveGame || selectedPackages.flex ? '6' : '5', label: 'Dynamic pricing active', dates: 'Game day adjustments', status: 'upcoming' },
+                          ].map((item, i) => (
+                            <div key={i} className="flex items-center gap-3">
+                              <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
+                                item.status === 'done' ? 'bg-[#007a47] text-white' : 'bg-[rgba(76,101,240,0.1)] text-[#4c65f0]'
+                              }`}>
+                                {item.status === 'done' ? '✓' : item.phase}
+                              </div>
+                              <div className="flex-1 text-sm font-medium text-black tracking-tight">{item.label}</div>
+                              <div className={`text-sm tracking-tight ${item.status === 'done' ? 'text-[#007a47] font-semibold' : 'text-[rgba(0,0,0,0.5)]'}`}>
+                                {item.dates}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Conclusion */}
+                      <div className="text-sm text-black leading-[22px] tracking-tight animate-fade-in" style={{ animationDelay: '2400ms' }}>
+                        <p>{pc.conclusion}</p>
+                      </div>
+                    </>
+                  );
+                })()}
+              </div>
+            )}
+
             {/* Regular Campaign Response */}
-            {showText && !isAnySTRWorkflow && (
+            {showText && !isAnySTRWorkflow && !isAnyPricingWorkflow && (
             <div className="space-y-6">
               <div className="text-sm text-black leading-[22px] tracking-tight animate-fade-in" style={{ animationDelay: '0ms' }}>
                 <p>
@@ -1262,8 +2232,8 @@ function ChatPageContent() {
         </div>
       </div>
 
-      {/* Right Sidebar - Only show when not STR workflow OR when STR campaign is generated */}
-      {(!isSTRWorkflow || generatingCampaign) && (
+      {/* Right Sidebar - Show for regular workflows, STR after generation, or Pricing after generation */}
+      {(!isSTRWorkflow || generatingCampaign) && (!isPricingWorkflow || generatingPricingCampaign) && (
       <div
         className="w-[515px] bg-white border-l border-[rgba(0,0,0,0.1)] flex flex-col transition-all duration-700 ease-out"
         style={{
@@ -1299,7 +2269,67 @@ function ChatPageContent() {
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-8 space-y-6">
-          {generatingCampaign ? (
+          {generatingPricingCampaign ? (
+            <>
+              {/* Pricing Campaign Sidebar */}
+              {(() => {
+                const revenueValue = (112.5 - (pricingSliderValue / 100) * 14.8).toFixed(1);
+                const sellThrough = Math.round(78 + (pricingSliderValue / 100) * 17);
+                const tierLabel = tierStructure === 'conservative' ? '3' : tierStructure === 'balanced' ? '4' : '5';
+                const packageCount = Object.values(selectedPackages).filter(Boolean).length;
+                return (
+                  <>
+                    <div className="inline-flex items-center px-3 h-8 border border-[rgba(0,0,0,0.15)] rounded bg-transparent">
+                      <span className="text-sm font-semibold text-[#4c65f0] tracking-tight">Pricing & Packaging</span>
+                    </div>
+
+                    <div className="flex items-start gap-4">
+                      <div className="flex-1">
+                        <h1 className="text-2xl font-bold text-black tracking-tight leading-none mb-1">
+                          2026-27 On-Sale Pricing & Packaging
+                        </h1>
+                        <p className="text-sm text-[rgba(0,0,0,0.65)] tracking-tight">
+                          18,200 Seats • 41 Games • {tierLabel} Tiers • Jun 1 On-Sale
+                        </p>
+                      </div>
+                      <div className="text-right whitespace-nowrap">
+                        <div className="text-lg font-semibold text-[#007a47] tracking-tight">${revenueValue}MM</div>
+                        <div className="text-sm text-[rgba(0,0,0,0.65)] tracking-tight">Projected ticket revenue</div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <SectionCard
+                        icon="https://www.figma.com/api/mcp/asset/4a62c6bf-a456-4cb3-b835-815553d51470"
+                        title="Total Seats"
+                        value="18,200 Capacity"
+                      />
+                      <SectionCard
+                        icon="https://www.figma.com/api/mcp/asset/913cffaa-f0bf-4fa0-b024-575a787b4760"
+                        title="Home Games"
+                        value="41 Games"
+                      />
+                      <SectionCard
+                        icon="https://www.figma.com/api/mcp/asset/1821a86c-cb32-46b4-94c7-66e989c3173f"
+                        title="Game Tiers"
+                        value={`${tierLabel} Tiers`}
+                      />
+                      <SectionCard
+                        icon="https://www.figma.com/api/mcp/asset/f335fd27-7f35-400e-96f9-f544c70816df"
+                        title="Package Types"
+                        value={`${packageCount} Offered`}
+                      />
+                      <SectionCard
+                        icon="https://www.figma.com/api/mcp/asset/1821a86c-cb32-46b4-94c7-66e989c3173f"
+                        title="Avg Sell-Through"
+                        value={`${sellThrough}% Target`}
+                      />
+                    </div>
+                  </>
+                );
+              })()}
+            </>
+          ) : generatingCampaign ? (
             <>
               {/* STR Campaign Sidebar */}
               {(() => {
@@ -1421,7 +2451,21 @@ function ChatPageContent() {
             </div>
             <div className="px-4 py-3">
               <ul className="text-sm text-black tracking-tight space-y-1 list-disc list-inside">
-                {generatingCampaign ? (
+                {generatingPricingCampaign ? (
+                  <>
+                    <li>{pricingSliderValue < 40 ? 'Revenue-focused' : pricingSliderValue > 60 ? 'Attendance-focused' : 'Balanced'} pricing strategy targeting ${(112.5 - (pricingSliderValue / 100) * 14.8).toFixed(1)}MM revenue</li>
+                    <li>{Object.entries(selectedPackages).filter(([, v]) => v).length} package types: {Object.entries(selectedPackages).filter(([, v]) => v).map(([k]) => {
+                      const labels: Record<string, string> = { fullSeason: 'Full', halfSeason: 'Half', quarterSeason: 'Quarter', fiveGame: '5-Game', flex: 'Flex', singleGame: 'Single', group: 'Group' };
+                      return labels[k] || k;
+                    }).join(', ')}</li>
+                    <li>{tierStructure.charAt(0).toUpperCase() + tierStructure.slice(1)} game tiering ({tierStructure === 'conservative' ? '3' : tierStructure === 'balanced' ? '4' : '5'} tiers)</li>
+                    {pricingConstraints.capYoY && <li>YoY price increase capped at {maxYoYIncrease}%</li>}
+                    {pricingConstraints.floorPrice && <li>Floor price set at ${floorPriceAmount} per ticket</li>}
+                    {pricingConstraints.maintainLadder && <li>Discount ladder maintained across all package tiers</li>}
+                    {pricingConstraints.matchSecondary && <li>Secondary market price matching on low-demand games</li>}
+                    <li>Go-to-market: Season plans Apr 1 → Single game Jun 1</li>
+                  </>
+                ) : generatingCampaign ? (
                   <>
                     <li>Targeted {Math.round(67 + (sliderValue / 100) * 20)}% renewal rate with {sliderValue < 40 ? 'revenue-first' : sliderValue > 60 ? 'retention-first' : 'balanced'} approach</li>
                     {checkboxSelections.longtimeMembers && <li>Prioritized longtime member recognition with exclusive perks</li>}
@@ -1466,11 +2510,11 @@ function ChatPageContent() {
               <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
                 <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
               </svg>
-              Launch Campaign
+              {generatingPricingCampaign ? 'Publish Pricing' : 'Launch Campaign'}
             </button>
 
             <button className="w-full h-14 bg-black hover:bg-gray-900 text-white rounded-full transition-colors font-semibold text-base tracking-tight">
-              Edit Campaign
+              {generatingPricingCampaign ? 'Edit Configuration' : 'Edit Campaign'}
             </button>
 
             <button className="w-full h-14 bg-transparent border border-[rgba(0,0,0,0.15)] text-black rounded-full hover:bg-gray-50 transition-colors font-semibold text-base tracking-tight">
@@ -1478,7 +2522,9 @@ function ChatPageContent() {
             </button>
 
             <p className="text-xs text-[rgba(0,0,0,0.65)] text-center tracking-tight">
-              Campaign will go live immediately. Landing pages will be published and messages scheduled.
+              {generatingPricingCampaign
+                ? 'Pricing will be locked and published to ticketing system. Package pages will be generated and on-sale dates activated.'
+                : 'Campaign will go live immediately. Landing pages will be published and messages scheduled.'}
             </p>
           </div>
         </div>
