@@ -35,20 +35,35 @@ function ChatPageContent() {
     upsellingQuarterToHalf: false,
     upsellingHalfToFull: false,
     crossSellAtRisk: false,
+    seatRelocation: false,
+    referralBonus: false,
+    earlyAccessPerks: false,
+    winBackLapsed: false,
+    autoRenewalDefault: true,
   });
-  const [priceCapPercentage, setPriceCapPercentage] = useState('');
+  const [priceCapPercentage, setPriceCapPercentage] = useState('12');
+  const [referralCreditAmount, setReferralCreditAmount] = useState('200');
   const [preferencesSubmitted, setPreferencesSubmitted] = useState(false);
   const [paymentPlans, setPaymentPlans] = useState({
-    plan1: false, // 10% upfront, 12 monthly
-    plan2: false, // 15% upfront, 9 monthly (recommended)
-    plan3: false, // 10% upfront, 6 payments
+    plan1: false,
+    plan2: false,
+    plan3: false,
+    payInFull: false,
+    monthlySubscription: false,
   });
+  const [payInFullDiscount, setPayInFullDiscount] = useState('5');
+  const [requireCardOnFile, setRequireCardOnFile] = useState(true);
   const [paymentPlansSubmitted, setPaymentPlansSubmitted] = useState(false);
-  const [requireFullUpfront, setRequireFullUpfront] = useState<boolean | null>(null);
+  const [requireFullUpfront, setRequireFullUpfront] = useState<string | null>(null);
+  const [missedPaymentDeposit, setMissedPaymentDeposit] = useState('35');
   const [optOutOptions, setOptOutOptions] = useState({
     discountCredits: false,
     offerHalfQuarter: false,
     freeUpgrades: false,
+    waitlistPriority: false,
+    pauseSeason: false,
+    exitSurvey: false,
+    repOutreach: false,
   });
   const [optOutSubmitted, setOptOutSubmitted] = useState(false);
   const [generatingCampaign, setGeneratingCampaign] = useState(false);
@@ -63,12 +78,13 @@ function ChatPageContent() {
     halfSeason: true,
     quarterSeason: true,
     fiveGame: false,
-    flex: false,
+    threeGame: false,
+    flex: true,
     singleGame: true,
-    group: false,
+    group: true,
   });
-  const [flexConfig, setFlexConfig] = useState({ gameCount: 10, fanChoice: true });
-  const [groupMinSize, setGroupMinSize] = useState(15);
+  const [flexConfig, setFlexConfig] = useState({ gameCount: 3, fanChoice: true, requireTierMix: false, tierCount: 3, progressiveDiscount: true });
+  const [groupMinSize, setGroupMinSize] = useState(7);
   const [packagesSubmitted, setPackagesSubmitted] = useState(false);
   const [tierStructure, setTierStructure] = useState<'conservative' | 'balanced' | 'aggressive'>('balanced');
   const [tierSubmitted, setTierSubmitted] = useState(false);
@@ -79,7 +95,8 @@ function ChatPageContent() {
     maintainLadder: true,
     premiumPricing: false,
   });
-  const [maxYoYIncrease, setMaxYoYIncrease] = useState('8');
+  const [secondaryPricePct, setSecondaryPricePct] = useState('100');
+  const [maxYoYIncrease, setMaxYoYIncrease] = useState('12');
   const [floorPriceAmount, setFloorPriceAmount] = useState('15');
   const [premiumPct, setPremiumPct] = useState('40');
   const [constraintsSubmitted, setConstraintsSubmitted] = useState(false);
@@ -174,8 +191,8 @@ function ChatPageContent() {
     let newCampaign;
 
     if (generatingPricingCampaign) {
-      const revenueValue = (112.5 - (pricingSliderValue / 100) * 14.8).toFixed(1);
-      const sellThrough = Math.round(78 + (pricingSliderValue / 100) * 17);
+      const revenueValue = (22.5 - (pricingSliderValue / 100) * 3.0).toFixed(1);
+      const sellThrough = (96 + (pricingSliderValue / 100) * 3).toFixed(1);
 
       newCampaign = {
         title: '2026-27 On-Sale Pricing & Packaging',
@@ -192,8 +209,8 @@ function ChatPageContent() {
         createdFrom: 'pricing-workflow',
       };
     } else if (generatingCampaign) {
-      const revenueValue = (81.2 - (sliderValue / 100) * 10.1).toFixed(1);
-      const renewalRate = Math.round(67 + (sliderValue / 100) * 20);
+      const revenueValue = (78.0 - (sliderValue / 100) * 5.0).toFixed(1);
+      const renewalRate = (72 + (sliderValue / 100) * 16).toFixed(1);
 
       newCampaign = {
         title: '2026 Season Ticket Renewal Campaign',
@@ -306,8 +323,8 @@ function ChatPageContent() {
 
   // Generate Pricing-specific thinking steps
   const generatePricingThinkingSteps = () => {
-    const revenueValue = (112.5 - (pricingSliderValue / 100) * 14.8).toFixed(1);
-    const sellThrough = Math.round(78 + (pricingSliderValue / 100) * 17);
+    const revenueValue = (22.5 - (pricingSliderValue / 100) * 3.0).toFixed(1);
+    const sellThrough = (96 + (pricingSliderValue / 100) * 3).toFixed(1);
     const tierLabel = tierStructure === 'conservative' ? '3' : tierStructure === 'balanced' ? '4' : '5';
     const packageCount = Object.values(selectedPackages).filter(Boolean).length;
 
@@ -371,8 +388,8 @@ function ChatPageContent() {
 
   // Generate Pricing campaign content
   const generatePricingCampaignContent = () => {
-    const revenueValue = (112.5 - (pricingSliderValue / 100) * 14.8).toFixed(1);
-    const sellThrough = Math.round(78 + (pricingSliderValue / 100) * 17);
+    const revenueValue = (22.5 - (pricingSliderValue / 100) * 3.0).toFixed(1);
+    const sellThrough = (96 + (pricingSliderValue / 100) * 3).toFixed(1);
     const isRevenueFocused = pricingSliderValue < 40;
     const isAttendanceFocused = pricingSliderValue > 60;
     const tierLabel = tierStructure === 'conservative' ? '3' : tierStructure === 'balanced' ? '4' : '5';
@@ -422,6 +439,7 @@ function ChatPageContent() {
       halfSeason: 'Half Season (20)',
       quarterSeason: 'Quarter (10)',
       fiveGame: '5-Game Mini',
+      threeGame: '3-Game Mini',
       flex: `Flex (${flexConfig.gameCount})`,
       singleGame: 'Single Game',
     };
@@ -534,7 +552,7 @@ function ChatPageContent() {
         paymentPlans.plan1 && '10% upfront with 12 monthly payments',
         paymentPlans.plan2 && '15% upfront with 9 monthly payments (recommended)',
         paymentPlans.plan3 && '10% upfront with 6 payments'
-      ].filter(Boolean).join(', ') || 'flexible payment options'}. ${requireFullUpfront ? 'Fans who missed payment deadlines last season must pay in full upfront to ensure commitment.' : 'All fans, including those who missed deadlines, have access to payment plans to maximize inclusivity.'} Automated billing reduces friction across all tiers.`,
+      ].filter(Boolean).join(', ') || 'flexible payment options'}. ${requireFullUpfront === 'full' ? 'Fans who missed payment deadlines last season must pay in full upfront to ensure commitment.' : requireFullUpfront === 'higher-deposit' ? `Fans who missed payment deadlines last season are required to make a ${missedPaymentDeposit}% deposit to reduce risk.` : 'All fans, including those who missed deadlines, have access to standard terms with stricter auto-pay enforcement.'} Automated billing reduces friction across all tiers.`,
 
       conclusion: `With projected ${renewalRate}% retention and $${revenueValue}MM in revenue, this campaign balances${isRevenueFocused ? ' revenue generation' : isRenewalFocused ? ' member satisfaction' : ' strategic objectives'} while maintaining strong fan relationships. ${checkboxSelections.upsellingQuarterToHalf || checkboxSelections.upsellingHalfToFull ? 'Upsell opportunities add' : 'Segment-specific messaging drives'} incremental value beyond base renewals.${(optOutOptions.discountCredits || optOutOptions.offerHalfQuarter || optOutOptions.freeUpgrades) ? ` For fans opting out of auto-renewal, we've prepared retention offers including ${[
         optOutOptions.discountCredits && 'credit-based discounts',
@@ -717,37 +735,45 @@ function ChatPageContent() {
                       <thead>
                         <tr className="bg-[rgba(0,0,0,0.02)] border-b border-[rgba(0,0,0,0.1)]">
                           <th className="text-left px-4 py-3 font-semibold text-[rgba(0,0,0,0.65)] tracking-tight">Season</th>
+                          <th className="text-left px-4 py-3 font-semibold text-[rgba(0,0,0,0.65)] tracking-tight">Accounts</th>
                           <th className="text-left px-4 py-3 font-semibold text-[rgba(0,0,0,0.65)] tracking-tight">Renewal Rate</th>
                           <th className="text-left px-4 py-3 font-semibold text-[rgba(0,0,0,0.65)] tracking-tight">Full Season</th>
                           <th className="text-left px-4 py-3 font-semibold text-[rgba(0,0,0,0.65)] tracking-tight">Half Season</th>
                           <th className="text-left px-4 py-3 font-semibold text-[rgba(0,0,0,0.65)] tracking-tight">Flex Plans</th>
                           <th className="text-left px-4 py-3 font-semibold text-[rgba(0,0,0,0.65)] tracking-tight">Total Revenue</th>
+                          <th className="text-left px-4 py-3 font-semibold text-[rgba(0,0,0,0.65)] tracking-tight">Avg/Acct</th>
                         </tr>
                       </thead>
                       <tbody>
                         <tr className="border-b border-[rgba(0,0,0,0.08)]">
                           <td className="px-4 py-3 font-medium text-black">2023</td>
+                          <td className="px-4 py-3 text-[rgba(0,0,0,0.75)]">8,200</td>
                           <td className="px-4 py-3 text-[rgba(0,0,0,0.75)]">74%</td>
                           <td className="px-4 py-3 text-[rgba(0,0,0,0.75)]">$38.2MM</td>
                           <td className="px-4 py-3 text-[rgba(0,0,0,0.75)]">$12.8MM</td>
                           <td className="px-4 py-3 text-[rgba(0,0,0,0.75)]">$6.9MM</td>
                           <td className="px-4 py-3 font-semibold text-black">$57.9MM</td>
+                          <td className="px-4 py-3 text-[rgba(0,0,0,0.75)]">$7,061</td>
                         </tr>
                         <tr className="border-b border-[rgba(0,0,0,0.08)]">
                           <td className="px-4 py-3 font-medium text-black">2024</td>
+                          <td className="px-4 py-3 text-[rgba(0,0,0,0.75)]">8,800</td>
                           <td className="px-4 py-3 text-[rgba(0,0,0,0.75)]">76%</td>
                           <td className="px-4 py-3 text-[rgba(0,0,0,0.75)]">$42.1MM</td>
                           <td className="px-4 py-3 text-[rgba(0,0,0,0.75)]">$14.5MM</td>
                           <td className="px-4 py-3 text-[rgba(0,0,0,0.75)]">$7.8MM</td>
                           <td className="px-4 py-3 font-semibold text-black">$64.4MM</td>
+                          <td className="px-4 py-3 text-[rgba(0,0,0,0.75)]">$7,318</td>
                         </tr>
                         <tr>
                           <td className="px-4 py-3 font-medium text-black">2025</td>
+                          <td className="px-4 py-3 text-[rgba(0,0,0,0.75)]">9,345</td>
                           <td className="px-4 py-3 text-[rgba(0,0,0,0.75)]">79%</td>
                           <td className="px-4 py-3 text-[rgba(0,0,0,0.75)]">$46.8MM</td>
                           <td className="px-4 py-3 text-[rgba(0,0,0,0.75)]">$16.2MM</td>
                           <td className="px-4 py-3 text-[rgba(0,0,0,0.75)]">$8.4MM</td>
                           <td className="px-4 py-3 font-semibold text-black">$71.4MM</td>
+                          <td className="px-4 py-3 text-[rgba(0,0,0,0.75)]">$7,639</td>
                         </tr>
                       </tbody>
                     </table>
@@ -810,26 +836,36 @@ function ChatPageContent() {
                   </div>
 
                   {/* Dynamic Metrics */}
-                  <div className="flex justify-center gap-16 pt-4">
-                    {/* Forecasted Revenue */}
+                  <div className="flex justify-center gap-10 pt-4">
                     <div className="text-center">
                       <div className="text-sm font-semibold text-[rgba(0,0,0,0.5)] tracking-tight mb-2">
                         Forecasted Revenue
                       </div>
                       <div className="text-3xl font-bold text-black tracking-tight">
-                        ${(81.2 - (sliderValue / 100) * 10.1).toFixed(1)}MM
+                        ${(78.0 - (sliderValue / 100) * 5.0).toFixed(1)}MM
                       </div>
                     </div>
-
-                    {/* Renewal Rates */}
                     <div className="text-center">
                       <div className="text-sm font-semibold text-[rgba(0,0,0,0.5)] tracking-tight mb-2">
                         Forecasted Renewal Rate
                       </div>
                       <div className="text-3xl font-bold text-black tracking-tight">
-                        {Math.round(67 + (sliderValue / 100) * 20)}%
+                        {(72 + (sliderValue / 100) * 16).toFixed(1)}%
                       </div>
                     </div>
+                    <div className="text-center">
+                      <div className="text-sm font-semibold text-[rgba(0,0,0,0.5)] tracking-tight mb-2">
+                        Avg Rev / Account
+                      </div>
+                      <div className="text-3xl font-bold text-black tracking-tight">
+                        ${Math.round(78000 / (9345 * (72 + (sliderValue / 100) * 16) / 100) * (78.0 - (sliderValue / 100) * 5.0) / 78.0 * 1000).toLocaleString()}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex justify-center pt-1">
+                    <span className="text-sm text-[rgba(0,0,0,0.45)] tracking-tight">
+                      ~{Math.round(9345 * (1 - (72 + (sliderValue / 100) * 16) / 100)).toLocaleString()} accounts would not renew at this setting
+                    </span>
                   </div>
 
                   {/* Continue Button - Hide after submission */}
@@ -891,6 +927,7 @@ function ChatPageContent() {
                       />
                       <span className="text-base text-black tracking-tight group-hover:text-[#4c65f0] transition-colors">
                         Capping Maximum Price Increase
+                        <span className="ml-2 text-sm text-[rgba(0,0,0,0.5)]">Recommended: 12%</span>
                       </span>
                     </label>
 
@@ -967,6 +1004,109 @@ function ChatPageContent() {
                     </span>
                   </label>
 
+                  {/* Seat Relocation Incentives */}
+                  <label className="flex items-start gap-3 cursor-pointer group">
+                    <input
+                      type="checkbox"
+                      checked={checkboxSelections.seatRelocation}
+                      onChange={(e) => setCheckboxSelections({...checkboxSelections, seatRelocation: e.target.checked})}
+                      disabled={preferencesSubmitted || generatingCampaign}
+                      className="w-5 h-5 mt-0.5 rounded border-2 border-[rgba(0,0,0,0.3)] text-[#4c65f0] focus:ring-[#4c65f0] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    />
+                    <span className="text-base text-black tracking-tight group-hover:text-[#4c65f0] transition-colors">
+                      Seat relocation incentives
+                      <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-[rgba(76,101,240,0.1)] text-[#4c65f0]">Recommended</span>
+                    </span>
+                  </label>
+
+                  {/* Referral Bonus */}
+                  <div className="space-y-3">
+                    <label className="flex items-start gap-3 cursor-pointer group">
+                      <input
+                        type="checkbox"
+                        checked={checkboxSelections.referralBonus}
+                        onChange={(e) => setCheckboxSelections({...checkboxSelections, referralBonus: e.target.checked})}
+                        disabled={preferencesSubmitted || generatingCampaign}
+                        className="w-5 h-5 mt-0.5 rounded border-2 border-[rgba(0,0,0,0.3)] text-[#4c65f0] focus:ring-[#4c65f0] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                      />
+                      <span className="text-base text-black tracking-tight group-hover:text-[#4c65f0] transition-colors">
+                        Referral bonus for renewals
+                      </span>
+                    </label>
+                    {checkboxSelections.referralBonus && !preferencesSubmitted && (
+                      <div className="ml-8 flex items-center gap-3">
+                        <span className="text-sm text-[rgba(0,0,0,0.65)]">Referral credit:</span>
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-base text-[rgba(0,0,0,0.5)]">$</span>
+                          <input type="number" min="50" max="1000" value={referralCreditAmount}
+                            onChange={(e) => setReferralCreditAmount(e.target.value)}
+                            className="w-24 pl-7 pr-3 py-2 border border-[rgba(0,0,0,0.23)] rounded text-base text-black focus:outline-none focus:border-[#4c65f0] focus:border-2"
+                          />
+                        </div>
+                        <span className="text-sm text-[rgba(0,0,0,0.45)]">per referral</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Early Access Perks */}
+                  <label className="flex items-start gap-3 cursor-pointer group">
+                    <input
+                      type="checkbox"
+                      checked={checkboxSelections.earlyAccessPerks}
+                      onChange={(e) => setCheckboxSelections({...checkboxSelections, earlyAccessPerks: e.target.checked})}
+                      disabled={preferencesSubmitted || generatingCampaign}
+                      className="w-5 h-5 mt-0.5 rounded border-2 border-[rgba(0,0,0,0.3)] text-[#4c65f0] focus:ring-[#4c65f0] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    />
+                    <span className="text-base text-black tracking-tight group-hover:text-[#4c65f0] transition-colors">
+                      Early access perks (playoff priority, pre-sale, exclusive events)
+                      <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-[rgba(76,101,240,0.1)] text-[#4c65f0]">Recommended</span>
+                    </span>
+                  </label>
+
+                  {/* Win-Back Lapsed STH */}
+                  <label className="flex items-start gap-3 cursor-pointer group">
+                    <input
+                      type="checkbox"
+                      checked={checkboxSelections.winBackLapsed}
+                      onChange={(e) => setCheckboxSelections({...checkboxSelections, winBackLapsed: e.target.checked})}
+                      disabled={preferencesSubmitted || generatingCampaign}
+                      className="w-5 h-5 mt-0.5 rounded border-2 border-[rgba(0,0,0,0.3)] text-[#4c65f0] focus:ring-[#4c65f0] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    />
+                    <span className="text-base text-black tracking-tight group-hover:text-[#4c65f0] transition-colors">
+                      Win-back campaign for lapsed season ticket holders
+                      <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-[#ccff00] text-black">New</span>
+                    </span>
+                  </label>
+
+                  {/* Auto-Renewal Toggle */}
+                  <div className="border-t border-[rgba(0,0,0,0.08)] pt-6 mt-2">
+                    <div className="text-sm font-semibold text-[rgba(0,0,0,0.5)] tracking-tight mb-3">Renewal Default</div>
+                    <div className="flex gap-4">
+                      <label className={`flex-1 flex items-center gap-3 cursor-pointer p-4 rounded-lg border-2 transition-colors ${checkboxSelections.autoRenewalDefault ? 'border-[#4c65f0] bg-[rgba(76,101,240,0.03)]' : 'border-[rgba(0,0,0,0.1)] hover:border-[rgba(0,0,0,0.2)]'}`}>
+                        <input type="radio" name="renewalDefault" checked={checkboxSelections.autoRenewalDefault}
+                          onChange={() => setCheckboxSelections({...checkboxSelections, autoRenewalDefault: true})}
+                          disabled={preferencesSubmitted || generatingCampaign}
+                          className="w-4 h-4 text-[#4c65f0] focus:ring-[#4c65f0] disabled:opacity-50"
+                        />
+                        <div>
+                          <div className="text-sm font-semibold text-black tracking-tight">Auto-renew with opt-out</div>
+                          <div className="text-xs text-[rgba(0,0,0,0.5)] mt-0.5">Accounts renew automatically unless fan opts out</div>
+                        </div>
+                      </label>
+                      <label className={`flex-1 flex items-center gap-3 cursor-pointer p-4 rounded-lg border-2 transition-colors ${!checkboxSelections.autoRenewalDefault ? 'border-[#4c65f0] bg-[rgba(76,101,240,0.03)]' : 'border-[rgba(0,0,0,0.1)] hover:border-[rgba(0,0,0,0.2)]'}`}>
+                        <input type="radio" name="renewalDefault" checked={!checkboxSelections.autoRenewalDefault}
+                          onChange={() => setCheckboxSelections({...checkboxSelections, autoRenewalDefault: false})}
+                          disabled={preferencesSubmitted || generatingCampaign}
+                          className="w-4 h-4 text-[#4c65f0] focus:ring-[#4c65f0] disabled:opacity-50"
+                        />
+                        <div>
+                          <div className="text-sm font-semibold text-black tracking-tight">Require active renewal</div>
+                          <div className="text-xs text-[rgba(0,0,0,0.5)] mt-0.5">Fans must actively opt-in to renew</div>
+                        </div>
+                      </label>
+                    </div>
+                  </div>
+
                   {/* Continue Button - Hide after submission */}
                   {!preferencesSubmitted && (
                     <div className="flex justify-center pt-4">
@@ -1001,11 +1141,39 @@ function ChatPageContent() {
                 {/* Payment Plans Table */}
                 <div className="bg-white border border-[rgba(0,0,0,0.1)] rounded-2xl p-8 space-y-6">
                   <div className="space-y-4">
+                    {/* Pay in Full Discount */}
+                    <div>
+                      <label className="flex items-center gap-4 cursor-pointer group p-4 rounded-lg hover:bg-[rgba(76,101,240,0.03)] transition-colors">
+                        <input type="checkbox" checked={paymentPlans.payInFull}
+                          onChange={(e) => setPaymentPlans({...paymentPlans, payInFull: e.target.checked})}
+                          disabled={paymentPlansSubmitted}
+                          className="w-5 h-5 rounded border-2 border-[rgba(0,0,0,0.3)] text-[#4c65f0] focus:ring-[#4c65f0] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                        />
+                        <div className="flex-1">
+                          <div className="text-base font-semibold text-black tracking-tight">
+                            Pay-in-full discount
+                            <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-[rgba(76,101,240,0.1)] text-[#4c65f0]">Recommended</span>
+                          </div>
+                          <div className="text-sm text-[rgba(0,0,0,0.5)] mt-1">
+                            Offer a discount for fans who pay the full amount upfront — improves cash flow
+                          </div>
+                        </div>
+                      </label>
+                      {paymentPlans.payInFull && !paymentPlansSubmitted && (
+                        <div className="ml-14 mt-1 flex items-center gap-2">
+                          <span className="text-sm text-[rgba(0,0,0,0.65)]">Discount:</span>
+                          <input type="number" min="1" max="15" value={payInFullDiscount}
+                            onChange={(e) => setPayInFullDiscount(e.target.value)}
+                            className="w-16 px-2 py-1 border border-[rgba(0,0,0,0.23)] rounded text-sm text-center focus:outline-none focus:border-[#4c65f0]"
+                          />
+                          <span className="text-sm text-[rgba(0,0,0,0.65)]">% off</span>
+                        </div>
+                      )}
+                    </div>
+
                     {/* Plan 1: 10% upfront, 12 monthly */}
                     <label className="flex items-center gap-4 cursor-pointer group p-4 rounded-lg hover:bg-[rgba(76,101,240,0.03)] transition-colors">
-                      <input
-                        type="checkbox"
-                        checked={paymentPlans.plan1}
+                      <input type="checkbox" checked={paymentPlans.plan1}
                         onChange={(e) => setPaymentPlans({...paymentPlans, plan1: e.target.checked})}
                         disabled={paymentPlansSubmitted}
                         className="w-5 h-5 rounded border-2 border-[rgba(0,0,0,0.3)] text-[#4c65f0] focus:ring-[#4c65f0] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
@@ -1021,22 +1189,16 @@ function ChatPageContent() {
                     </label>
 
                     {/* Plan 2: 15% upfront, 9 monthly [Recommended] */}
-                    <label className="flex items-center gap-4 cursor-pointer group p-4 rounded-lg hover:bg-[rgba(76,101,240,0.03)] transition-colors border-2 border-[#4c65f0] bg-[rgba(76,101,240,0.02)]">
-                      <input
-                        type="checkbox"
-                        checked={paymentPlans.plan2}
+                    <label className="flex items-center gap-4 cursor-pointer group p-4 rounded-lg hover:bg-[rgba(76,101,240,0.03)] transition-colors">
+                      <input type="checkbox" checked={paymentPlans.plan2}
                         onChange={(e) => setPaymentPlans({...paymentPlans, plan2: e.target.checked})}
                         disabled={paymentPlansSubmitted}
                         className="w-5 h-5 rounded border-2 border-[rgba(0,0,0,0.3)] text-[#4c65f0] focus:ring-[#4c65f0] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                       />
                       <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <div className="text-base font-semibold text-black tracking-tight">
-                            15% upfront with 9 equal payments
-                          </div>
-                          <span className="text-xs font-bold text-[#4c65f0] bg-[rgba(76,101,240,0.1)] px-2 py-1 rounded">
-                            RECOMMENDED
-                          </span>
+                        <div className="text-base font-semibold text-black tracking-tight">
+                          15% upfront with 9 equal payments
+                          <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-[rgba(76,101,240,0.1)] text-[#4c65f0]">Recommended</span>
                         </div>
                         <div className="text-sm text-[rgba(0,0,0,0.5)] mt-1">
                           Balanced commitment, completed before season ends
@@ -1046,9 +1208,7 @@ function ChatPageContent() {
 
                     {/* Plan 3: 10% upfront, 6 payments */}
                     <label className="flex items-center gap-4 cursor-pointer group p-4 rounded-lg hover:bg-[rgba(76,101,240,0.03)] transition-colors">
-                      <input
-                        type="checkbox"
-                        checked={paymentPlans.plan3}
+                      <input type="checkbox" checked={paymentPlans.plan3}
                         onChange={(e) => setPaymentPlans({...paymentPlans, plan3: e.target.checked})}
                         disabled={paymentPlansSubmitted}
                         className="w-5 h-5 rounded border-2 border-[rgba(0,0,0,0.3)] text-[#4c65f0] focus:ring-[#4c65f0] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
@@ -1062,6 +1222,47 @@ function ChatPageContent() {
                         </div>
                       </div>
                     </label>
+
+                    {/* Monthly subscription - $0 upfront */}
+                    <label className="flex items-center gap-4 cursor-pointer group p-4 rounded-lg hover:bg-[rgba(76,101,240,0.03)] transition-colors">
+                      <input type="checkbox" checked={paymentPlans.monthlySubscription}
+                        onChange={(e) => setPaymentPlans({...paymentPlans, monthlySubscription: e.target.checked})}
+                        disabled={paymentPlansSubmitted}
+                        className="w-5 h-5 rounded border-2 border-[rgba(0,0,0,0.3)] text-[#4c65f0] focus:ring-[#4c65f0] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                      />
+                      <div className="flex-1">
+                        <div className="text-base font-semibold text-black tracking-tight">
+                          Monthly subscription — $0 upfront, 12 equal payments
+                          <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-[#ccff00] text-black">New</span>
+                        </div>
+                        <div className="text-sm text-[rgba(0,0,0,0.5)] mt-1">
+                          Lowest barrier to entry — attracts price-sensitive fans
+                        </div>
+                      </div>
+                    </label>
+                  </div>
+
+                  {/* Card on file toggle */}
+                  <div className="border-t border-[rgba(0,0,0,0.08)] pt-4">
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <input type="checkbox" checked={requireCardOnFile}
+                        onChange={(e) => setRequireCardOnFile(e.target.checked)}
+                        disabled={paymentPlansSubmitted}
+                        className="w-5 h-5 rounded border-2 border-[rgba(0,0,0,0.3)] text-[#4c65f0] focus:ring-[#4c65f0] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                      />
+                      <div>
+                        <span className="text-sm font-semibold text-black tracking-tight">Require credit card on file for all payment plans</span>
+                        <span className="ml-2 text-xs text-[rgba(0,0,0,0.45)]">Reduces failed payment churn</span>
+                      </div>
+                    </label>
+                  </div>
+
+                  {/* Revenue timing indicator */}
+                  <div className="bg-[rgba(76,101,240,0.04)] border border-[rgba(76,101,240,0.15)] rounded-lg px-4 py-3">
+                    <p className="text-sm text-[rgba(0,0,0,0.75)] tracking-tight">
+                      <span className="font-semibold text-[#4c65f0]">Cash flow estimate:</span>{' '}
+                      {paymentPlans.payInFull ? 'Est. 55% of revenue collected by opening day' : paymentPlans.plan2 ? 'Est. 40% of revenue collected by opening day' : paymentPlans.monthlySubscription ? 'Est. 25% of revenue collected by opening day' : 'Select plans to see cash flow estimate'}
+                    </p>
                   </div>
 
                   {/* Continue Button */}
@@ -1079,7 +1280,7 @@ function ChatPageContent() {
               </div>
             )}
 
-            {/* STR Workflow - Full Upfront Payment Question */}
+            {/* STR Workflow - Missed Payment Policy */}
             {isAnySTRWorkflow && paymentPlansSubmitted && (
               <div
                 className="transition-all duration-700 mt-6"
@@ -1088,39 +1289,63 @@ function ChatPageContent() {
                   transform: 'translateY(0)',
                 }}
               >
-                {/* AI Question */}
-                <div className="mb-4">
+                <div className="mb-2">
                   <p className="text-base text-black leading-[26px] tracking-tight">
-                    Require full upfront payment for fans who missed payment deadlines last season?
+                    How do you want to handle fans who missed payment deadlines last season?
+                  </p>
+                </div>
+                <div className="bg-[rgba(76,101,240,0.04)] border border-[rgba(76,101,240,0.15)] rounded-lg px-4 py-3 mb-4">
+                  <p className="text-sm text-[rgba(0,0,0,0.75)] tracking-tight">
+                    <span className="font-semibold text-[#4c65f0]">142 accounts</span> missed payment deadlines last season, representing <span className="font-semibold">$1.1MM</span> in delayed collections.
                   </p>
                 </div>
 
-                {/* Yes/No Buttons or Selected Answer */}
                 {requireFullUpfront === null ? (
-                  <div className="flex gap-4">
-                    <button
-                      onClick={() => setRequireFullUpfront(true)}
-                      className="flex-1 bg-white border-2 border-[rgba(0,0,0,0.15)] hover:border-[#4c65f0] hover:bg-[rgba(76,101,240,0.03)] text-black px-8 py-4 rounded-xl font-semibold text-base tracking-tight transition-all"
+                  <div className="flex flex-col gap-3">
+                    <button onClick={() => setRequireFullUpfront('full')}
+                      className="bg-white border-2 border-[rgba(0,0,0,0.15)] hover:border-[#4c65f0] hover:bg-[rgba(76,101,240,0.03)] text-left px-6 py-4 rounded-xl transition-all"
                     >
-                      Yes
+                      <div className="text-base font-semibold text-black tracking-tight">Require full upfront payment</div>
+                      <div className="text-sm text-[rgba(0,0,0,0.5)] mt-1">Strictest enforcement — eliminates payment risk entirely</div>
                     </button>
-                    <button
-                      onClick={() => setRequireFullUpfront(false)}
-                      className="flex-1 bg-white border-2 border-[rgba(0,0,0,0.15)] hover:border-[#4c65f0] hover:bg-[rgba(76,101,240,0.03)] text-black px-8 py-4 rounded-xl font-semibold text-base tracking-tight transition-all"
+                    <button onClick={() => setRequireFullUpfront('higher-deposit')}
+                      className="bg-white border-2 border-[rgba(0,0,0,0.15)] hover:border-[#4c65f0] hover:bg-[rgba(76,101,240,0.03)] text-left px-6 py-4 rounded-xl transition-all"
                     >
-                      No
+                      <div className="flex items-center gap-2">
+                        <div className="text-base font-semibold text-black tracking-tight">Require higher deposit (25-50%)</div>
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-[rgba(76,101,240,0.1)] text-[#4c65f0]">Recommended</span>
+                      </div>
+                      <div className="text-sm text-[rgba(0,0,0,0.5)] mt-1">Middle ground — reduces risk while keeping plans accessible</div>
+                    </button>
+                    <button onClick={() => setRequireFullUpfront('standard')}
+                      className="bg-white border-2 border-[rgba(0,0,0,0.15)] hover:border-[#4c65f0] hover:bg-[rgba(76,101,240,0.03)] text-left px-6 py-4 rounded-xl transition-all"
+                    >
+                      <div className="text-base font-semibold text-black tracking-tight">Standard terms with stricter auto-pay enforcement</div>
+                      <div className="text-sm text-[rgba(0,0,0,0.5)] mt-1">Gentlest approach — require card on file, auto-retry failed payments</div>
                     </button>
                   </div>
                 ) : (
-                  <div className="bg-[rgba(76,101,240,0.05)] border border-[rgba(76,101,240,0.2)] rounded-xl px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <svg width="20" height="20" viewBox="0 0 20 20" fill="#4c65f0">
-                        <path d="M10 2L10 14M10 2L6 6M10 2L14 6" stroke="#4c65f0" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                      <span className="text-base font-semibold text-[#4c65f0] tracking-tight">
-                        {requireFullUpfront ? 'Yes' : 'No'}
-                      </span>
+                  <div className="space-y-3">
+                    <div className="bg-[rgba(76,101,240,0.05)] border border-[rgba(76,101,240,0.2)] rounded-xl px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                          <path d="M7 10l2.5 2.5L13 7.5" stroke="#4c65f0" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                        <span className="text-base font-semibold text-[#4c65f0] tracking-tight">
+                          {requireFullUpfront === 'full' ? 'Full upfront payment required' : requireFullUpfront === 'higher-deposit' ? 'Higher deposit required' : 'Standard terms with auto-pay'}
+                        </span>
+                      </div>
                     </div>
+                    {requireFullUpfront === 'higher-deposit' && (
+                      <div className="ml-2 flex items-center gap-3">
+                        <span className="text-sm text-[rgba(0,0,0,0.65)]">Deposit amount:</span>
+                        <input type="number" min="20" max="60" value={missedPaymentDeposit}
+                          onChange={(e) => setMissedPaymentDeposit(e.target.value)}
+                          className="w-16 px-2 py-1 border border-[rgba(0,0,0,0.23)] rounded text-sm text-center focus:outline-none focus:border-[#4c65f0]"
+                        />
+                        <span className="text-sm text-[rgba(0,0,0,0.65)]">% upfront</span>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -1173,7 +1398,7 @@ function ChatPageContent() {
                   </label>
 
                   {/* Option 3: Free upgrades */}
-                  <label className="flex items-start gap-3 cursor-pointer group p-4 rounded-lg hover:bg-[rgba(76,101,240,0.03)] transition-colors border-2 border-[#4c65f0] bg-[rgba(76,101,240,0.02)]">
+                  <label className="flex items-start gap-3 cursor-pointer group">
                     <input
                       type="checkbox"
                       checked={optOutOptions.freeUpgrades}
@@ -1181,16 +1406,69 @@ function ChatPageContent() {
                       disabled={optOutSubmitted}
                       className="w-5 h-5 mt-0.5 rounded border-2 border-[rgba(0,0,0,0.3)] text-[#4c65f0] focus:ring-[#4c65f0] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                     />
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-base text-black tracking-tight group-hover:text-[#4c65f0] transition-colors">
-                          Offer 3 free upgrades to next best price level
-                        </span>
-                        <span className="text-xs font-bold text-[#4c65f0] bg-[rgba(76,101,240,0.1)] px-2 py-1 rounded">
-                          RECOMMENDED
-                        </span>
-                      </div>
-                    </div>
+                    <span className="text-base text-black tracking-tight group-hover:text-[#4c65f0] transition-colors">
+                      Offer 3 free upgrades to next best price level
+                      <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-[rgba(76,101,240,0.1)] text-[#4c65f0]">Recommended</span>
+                    </span>
+                  </label>
+
+                  {/* Option 4: Waitlist priority notice */}
+                  <label className="flex items-start gap-3 cursor-pointer group">
+                    <input
+                      type="checkbox"
+                      checked={optOutOptions.waitlistPriority}
+                      onChange={(e) => setOptOutOptions({...optOutOptions, waitlistPriority: e.target.checked})}
+                      disabled={optOutSubmitted}
+                      className="w-5 h-5 mt-0.5 rounded border-2 border-[rgba(0,0,0,0.3)] text-[#4c65f0] focus:ring-[#4c65f0] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    />
+                    <span className="text-base text-black tracking-tight group-hover:text-[#4c65f0] transition-colors">
+                      Notify fans they&apos;ll lose seat priority and go to back of waitlist
+                      <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-[rgba(76,101,240,0.1)] text-[#4c65f0]">Recommended</span>
+                    </span>
+                  </label>
+
+                  {/* Option 5: Pause/skip season */}
+                  <label className="flex items-start gap-3 cursor-pointer group">
+                    <input
+                      type="checkbox"
+                      checked={optOutOptions.pauseSeason}
+                      onChange={(e) => setOptOutOptions({...optOutOptions, pauseSeason: e.target.checked})}
+                      disabled={optOutSubmitted}
+                      className="w-5 h-5 mt-0.5 rounded border-2 border-[rgba(0,0,0,0.3)] text-[#4c65f0] focus:ring-[#4c65f0] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    />
+                    <span className="text-base text-black tracking-tight group-hover:text-[#4c65f0] transition-colors">
+                      Offer 1-year membership freeze with guaranteed seat return
+                      <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-[#ccff00] text-black">New</span>
+                    </span>
+                  </label>
+
+                  {/* Option 6: Exit survey */}
+                  <label className="flex items-start gap-3 cursor-pointer group">
+                    <input
+                      type="checkbox"
+                      checked={optOutOptions.exitSurvey}
+                      onChange={(e) => setOptOutOptions({...optOutOptions, exitSurvey: e.target.checked})}
+                      disabled={optOutSubmitted}
+                      className="w-5 h-5 mt-0.5 rounded border-2 border-[rgba(0,0,0,0.3)] text-[#4c65f0] focus:ring-[#4c65f0] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    />
+                    <span className="text-base text-black tracking-tight group-hover:text-[#4c65f0] transition-colors">
+                      Require exit survey before processing cancellation
+                    </span>
+                  </label>
+
+                  {/* Option 7: Rep outreach before cancellation */}
+                  <label className="flex items-start gap-3 cursor-pointer group">
+                    <input
+                      type="checkbox"
+                      checked={optOutOptions.repOutreach}
+                      onChange={(e) => setOptOutOptions({...optOutOptions, repOutreach: e.target.checked})}
+                      disabled={optOutSubmitted}
+                      className="w-5 h-5 mt-0.5 rounded border-2 border-[rgba(0,0,0,0.3)] text-[#4c65f0] focus:ring-[#4c65f0] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    />
+                    <span className="text-base text-black tracking-tight group-hover:text-[#4c65f0] transition-colors">
+                      Route to account rep for personal outreach before processing
+                      <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-[rgba(76,101,240,0.1)] text-[#4c65f0]">Recommended</span>
+                    </span>
                   </label>
 
                   {/* Continue Button */}
@@ -1249,38 +1527,34 @@ function ChatPageContent() {
                         <th className="text-left px-4 py-3 font-semibold text-[rgba(0,0,0,0.65)] tracking-tight">Avg Sell-Through</th>
                         <th className="text-left px-4 py-3 font-semibold text-[rgba(0,0,0,0.65)] tracking-tight">Single Game</th>
                         <th className="text-left px-4 py-3 font-semibold text-[rgba(0,0,0,0.65)] tracking-tight">Flex Plans</th>
-                        <th className="text-left px-4 py-3 font-semibold text-[rgba(0,0,0,0.65)] tracking-tight">Partial Plans</th>
-                        <th className="text-left px-4 py-3 font-semibold text-[rgba(0,0,0,0.65)] tracking-tight">Full Season</th>
+                        <th className="text-left px-4 py-3 font-semibold text-[rgba(0,0,0,0.65)] tracking-tight">New Fixed Plans</th>
                         <th className="text-left px-4 py-3 font-semibold text-[rgba(0,0,0,0.65)] tracking-tight">Total Rev</th>
                       </tr>
                     </thead>
                     <tbody>
                       <tr className="border-b border-[rgba(0,0,0,0.08)]">
                         <td className="px-4 py-3 font-medium text-black">2023</td>
-                        <td className="px-4 py-3 text-[rgba(0,0,0,0.75)]">81%</td>
-                        <td className="px-4 py-3 text-[rgba(0,0,0,0.75)]">$14.2MM</td>
-                        <td className="px-4 py-3 text-[rgba(0,0,0,0.75)]">$6.9MM</td>
-                        <td className="px-4 py-3 text-[rgba(0,0,0,0.75)]">$19.7MM</td>
-                        <td className="px-4 py-3 text-[rgba(0,0,0,0.75)]">$38.2MM</td>
-                        <td className="px-4 py-3 font-semibold text-black">$79.0MM</td>
+                        <td className="px-4 py-3 text-[rgba(0,0,0,0.75)]">95.3%</td>
+                        <td className="px-4 py-3 text-[rgba(0,0,0,0.75)]">$7.5MM</td>
+                        <td className="px-4 py-3 text-[rgba(0,0,0,0.75)]">$2.4MM</td>
+                        <td className="px-4 py-3 text-[rgba(0,0,0,0.75)]">$2.5MM</td>
+                        <td className="px-4 py-3 font-semibold text-black">$12.4MM</td>
                       </tr>
                       <tr className="border-b border-[rgba(0,0,0,0.08)]">
                         <td className="px-4 py-3 font-medium text-black">2024</td>
-                        <td className="px-4 py-3 text-[rgba(0,0,0,0.75)]">84%</td>
-                        <td className="px-4 py-3 text-[rgba(0,0,0,0.75)]">$16.8MM</td>
-                        <td className="px-4 py-3 text-[rgba(0,0,0,0.75)]">$7.8MM</td>
-                        <td className="px-4 py-3 text-[rgba(0,0,0,0.75)]">$22.3MM</td>
-                        <td className="px-4 py-3 text-[rgba(0,0,0,0.75)]">$42.1MM</td>
-                        <td className="px-4 py-3 font-semibold text-black">$89.0MM</td>
+                        <td className="px-4 py-3 text-[rgba(0,0,0,0.75)]">96.7%</td>
+                        <td className="px-4 py-3 text-[rgba(0,0,0,0.75)]">$9.3MM</td>
+                        <td className="px-4 py-3 text-[rgba(0,0,0,0.75)]">$2.9MM</td>
+                        <td className="px-4 py-3 text-[rgba(0,0,0,0.75)]">$3.0MM</td>
+                        <td className="px-4 py-3 font-semibold text-black">$15.2MM</td>
                       </tr>
                       <tr>
                         <td className="px-4 py-3 font-medium text-black">2025</td>
-                        <td className="px-4 py-3 text-[rgba(0,0,0,0.75)]">87%</td>
-                        <td className="px-4 py-3 text-[rgba(0,0,0,0.75)]">$19.1MM</td>
-                        <td className="px-4 py-3 text-[rgba(0,0,0,0.75)]">$8.4MM</td>
-                        <td className="px-4 py-3 text-[rgba(0,0,0,0.75)]">$24.6MM</td>
-                        <td className="px-4 py-3 text-[rgba(0,0,0,0.75)]">$46.8MM</td>
-                        <td className="px-4 py-3 font-semibold text-black">$98.9MM</td>
+                        <td className="px-4 py-3 text-[rgba(0,0,0,0.75)]">97.8%</td>
+                        <td className="px-4 py-3 text-[rgba(0,0,0,0.75)]">$11.1MM</td>
+                        <td className="px-4 py-3 text-[rgba(0,0,0,0.75)]">$3.9MM</td>
+                        <td className="px-4 py-3 text-[rgba(0,0,0,0.75)]">$3.8MM</td>
+                        <td className="px-4 py-3 font-semibold text-black">$18.8MM</td>
                       </tr>
                     </tbody>
                   </table>
@@ -1328,13 +1602,13 @@ function ChatPageContent() {
                     <div className="text-center">
                       <div className="text-sm font-semibold text-[rgba(0,0,0,0.5)] tracking-tight mb-2">Forecasted Total Revenue</div>
                       <div className="text-3xl font-bold text-black tracking-tight">
-                        ${(112.5 - (pricingSliderValue / 100) * 14.8).toFixed(1)}MM
+                        ${(22.5 - (pricingSliderValue / 100) * 3.0).toFixed(1)}MM
                       </div>
                     </div>
                     <div className="text-center">
                       <div className="text-sm font-semibold text-[rgba(0,0,0,0.5)] tracking-tight mb-2">Forecasted Avg Sell-Through</div>
                       <div className="text-3xl font-bold text-black tracking-tight">
-                        {Math.round(78 + (pricingSliderValue / 100) * 17)}%
+                        {(96 + (pricingSliderValue / 100) * 3).toFixed(1)}%
                       </div>
                     </div>
                   </div>
@@ -1362,13 +1636,14 @@ function ChatPageContent() {
                 </div>
                 <div className="bg-white border border-[rgba(0,0,0,0.1)] rounded-2xl p-8 space-y-4">
                   {[
-                    { key: 'fullSeason', label: 'Full Season Plan (41 games)', desc: null, defaultOn: true },
-                    { key: 'halfSeason', label: 'Half Season Plan (20 games)', desc: null, defaultOn: true },
-                    { key: 'quarterSeason', label: 'Quarter Season Plan (10 games)', desc: null, defaultOn: true },
-                    { key: 'fiveGame', label: '5-Game Mini Plan', desc: 'New offering — attracts first-time plan buyers', defaultOn: false },
-                    { key: 'flex', label: 'Flex Plan (choose-your-own games)', desc: null, defaultOn: false },
-                    { key: 'singleGame', label: 'Single Game Tickets', desc: null, defaultOn: true },
-                    { key: 'group', label: 'Group Packages (15+ tickets)', desc: null, defaultOn: false },
+                    { key: 'fullSeason', label: 'Full Season Plan (41 games)', desc: null, defaultOn: true, badge: 'Recommended' },
+                    { key: 'halfSeason', label: 'Half Season Plan (20 games)', desc: null, defaultOn: true, badge: 'Recommended' },
+                    { key: 'quarterSeason', label: 'Quarter Season Plan (10 games)', desc: null, defaultOn: true, badge: 'Recommended' },
+                    { key: 'flex', label: 'Flex Plan (choose-your-own games)', desc: null, defaultOn: true, badge: 'Recommended' },
+                    { key: 'singleGame', label: 'Single Game Tickets', desc: null, defaultOn: true, badge: 'Recommended' },
+                    { key: 'group', label: 'Group Packages (7+ tickets)', desc: null, defaultOn: true, badge: 'Recommended' },
+                    { key: 'fiveGame', label: '5-Game Mini Plan', desc: 'Attracts first-time plan buyers', defaultOn: false, badge: 'Recommended New' },
+                    { key: 'threeGame', label: '3-Game Mini Plan', desc: 'Lowest commitment entry point for new fans', defaultOn: false, badge: 'New' },
                   ].map((pkg) => (
                     <div key={pkg.key}>
                       <label className="flex items-start gap-3 cursor-pointer group p-3 rounded-lg hover:bg-[rgba(76,101,240,0.03)] transition-colors">
@@ -1382,6 +1657,11 @@ function ChatPageContent() {
                         <div>
                           <span className="text-base text-black tracking-tight group-hover:text-[#4c65f0] transition-colors">
                             {pkg.label}
+                            {pkg.badge && pkg.badge.split(' ').map((b: string) => (
+                              <span key={b} className={`ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${b === 'New' ? 'bg-[#ccff00] text-black' : 'bg-[rgba(76,101,240,0.1)] text-[#4c65f0]'}`}>
+                                {b}
+                              </span>
+                            ))}
                           </span>
                           {pkg.desc && (
                             <p className="text-sm text-[rgba(0,0,0,0.5)] mt-0.5">{pkg.desc}</p>
@@ -1391,26 +1671,49 @@ function ChatPageContent() {
 
                       {/* Flex config */}
                       {pkg.key === 'flex' && selectedPackages.flex && !packagesSubmitted && (
-                        <div className="ml-11 mt-2 flex items-center gap-4 text-sm">
+                        <div className="ml-11 mt-2 flex flex-col gap-3 text-sm">
                           <div className="flex items-center gap-2">
-                            <span className="text-[rgba(0,0,0,0.65)]">Games:</span>
+                            <span className="text-[rgba(0,0,0,0.65)]">Min. games:</span>
                             <select
                               value={flexConfig.gameCount}
                               onChange={(e) => setFlexConfig({ ...flexConfig, gameCount: parseInt(e.target.value) })}
                               className="border border-[rgba(0,0,0,0.23)] rounded px-2 py-1 text-sm focus:outline-none focus:border-[#4c65f0]"
                             >
-                              {[5, 10, 15, 20].map((n) => <option key={n} value={n}>{n}</option>)}
+                              {[3, 5, 7, 10, 15, 20].map((n) => <option key={n} value={n}>{n}</option>)}
                             </select>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-[rgba(0,0,0,0.65)]">Fan picks games?</span>
-                            <button
-                              onClick={() => setFlexConfig({ ...flexConfig, fanChoice: !flexConfig.fanChoice })}
-                              className={`px-3 py-1 rounded text-sm font-semibold transition-colors ${flexConfig.fanChoice ? 'bg-[#4c65f0] text-white' : 'bg-[rgba(0,0,0,0.08)] text-black'}`}
-                            >
-                              {flexConfig.fanChoice ? 'Yes' : 'No'}
-                            </button>
+                          <div className="flex flex-col gap-2">
+                            <label className="flex items-center gap-2 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={flexConfig.requireTierMix}
+                                onChange={(e) => setFlexConfig({ ...flexConfig, requireTierMix: e.target.checked })}
+                                className="w-4 h-4 rounded border-2 border-[rgba(0,0,0,0.3)] text-[#4c65f0] focus:ring-[#4c65f0] cursor-pointer"
+                              />
+                              <span className="text-[rgba(0,0,0,0.65)]">Require selection across different game tiers</span>
+                            </label>
+                            {flexConfig.requireTierMix && (
+                              <div className="ml-6 flex items-center gap-2">
+                                <span className="text-[rgba(0,0,0,0.65)]">Number of tiers:</span>
+                                <select
+                                  value={flexConfig.tierCount}
+                                  onChange={(e) => setFlexConfig({ ...flexConfig, tierCount: parseInt(e.target.value) })}
+                                  className="border border-[rgba(0,0,0,0.23)] rounded px-2 py-1 text-sm focus:outline-none focus:border-[#4c65f0]"
+                                >
+                                  {[2, 3, 4, 5].map((n) => <option key={n} value={n}>{n}</option>)}
+                                </select>
+                              </div>
+                            )}
                           </div>
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={flexConfig.progressiveDiscount}
+                              onChange={(e) => setFlexConfig({ ...flexConfig, progressiveDiscount: e.target.checked })}
+                              className="w-4 h-4 rounded border-2 border-[rgba(0,0,0,0.3)] text-[#4c65f0] focus:ring-[#4c65f0] cursor-pointer"
+                            />
+                            <span className="text-[rgba(0,0,0,0.65)]">Progressive discounting for each additional game selected</span>
+                          </label>
                         </div>
                       )}
 
@@ -1459,11 +1762,7 @@ function ChatPageContent() {
                   ]).map((tier) => (
                     <label
                       key={tier.value}
-                      className={`flex items-start gap-4 cursor-pointer p-4 rounded-lg transition-colors ${
-                        tier.recommended && tierStructure === tier.value ? 'border-2 border-[#4c65f0] bg-[rgba(76,101,240,0.02)]' :
-                        tierStructure === tier.value ? 'border-2 border-[#4c65f0] bg-[rgba(76,101,240,0.02)]' :
-                        'border-2 border-transparent hover:bg-[rgba(76,101,240,0.03)]'
-                      }`}
+                      className="flex items-start gap-4 cursor-pointer group"
                     >
                       <input
                         type="radio" name="tierStructure"
@@ -1472,13 +1771,13 @@ function ChatPageContent() {
                         disabled={tierSubmitted}
                         className="w-5 h-5 mt-0.5 text-[#4c65f0] focus:ring-[#4c65f0] cursor-pointer disabled:opacity-50"
                       />
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className="text-base font-semibold text-black tracking-tight">{tier.label}</span>
+                      <div>
+                        <span className="text-base font-semibold text-black tracking-tight group-hover:text-[#4c65f0] transition-colors">
+                          {tier.label}
                           {tier.recommended && (
-                            <span className="text-xs font-bold text-[#4c65f0] bg-[rgba(76,101,240,0.1)] px-2 py-1 rounded">RECOMMENDED</span>
+                            <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-[rgba(76,101,240,0.1)] text-[#4c65f0]">Recommended</span>
                           )}
-                        </div>
+                        </span>
                         <p className="text-sm text-[rgba(0,0,0,0.5)] mt-1">{tier.desc}</p>
                         {tierStructure === tier.value && (
                           <p className="text-sm text-[#4c65f0] mt-2 font-medium">{tier.preview}</p>
@@ -1521,7 +1820,8 @@ function ChatPageContent() {
                         className="w-5 h-5 mt-0.5 rounded border-2 border-[rgba(0,0,0,0.3)] text-[#4c65f0] focus:ring-[#4c65f0] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                       />
                       <span className="text-base text-black tracking-tight group-hover:text-[#4c65f0] transition-colors">
-                        Cap year-over-year price increase
+                        Capping Maximum Price Increase
+                        <span className="ml-2 text-sm text-[rgba(0,0,0,0.5)]">Recommended: 12%</span>
                       </span>
                     </label>
                     {pricingConstraints.capYoY && !constraintsSubmitted && (
@@ -1567,24 +1867,40 @@ function ChatPageContent() {
                   </div>
 
                   {/* Match Secondary */}
-                  <label className="flex items-start gap-3 cursor-pointer group">
-                    <input
-                      type="checkbox"
-                      checked={pricingConstraints.matchSecondary}
-                      onChange={(e) => setPricingConstraints({ ...pricingConstraints, matchSecondary: e.target.checked })}
-                      disabled={constraintsSubmitted}
-                      className="w-5 h-5 mt-0.5 rounded border-2 border-[rgba(0,0,0,0.3)] text-[#4c65f0] focus:ring-[#4c65f0] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                    />
-                    <div>
-                      <span className="text-base text-black tracking-tight group-hover:text-[#4c65f0] transition-colors">
-                        Price match or undercut secondary market for low-demand games
-                      </span>
-                      <p className="text-sm text-[rgba(0,0,0,0.5)] mt-0.5">Reduce unsold inventory by competing with resale market</p>
-                    </div>
-                  </label>
+                  <div>
+                    <label className="flex items-start gap-3 cursor-pointer group">
+                      <input
+                        type="checkbox"
+                        checked={pricingConstraints.matchSecondary}
+                        onChange={(e) => setPricingConstraints({ ...pricingConstraints, matchSecondary: e.target.checked })}
+                        disabled={constraintsSubmitted}
+                        className="w-5 h-5 mt-0.5 rounded border-2 border-[rgba(0,0,0,0.3)] text-[#4c65f0] focus:ring-[#4c65f0] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                      />
+                      <div>
+                        <span className="text-base text-black tracking-tight group-hover:text-[#4c65f0] transition-colors">
+                          Price match or undercut secondary market for low-demand games
+                        </span>
+                        <p className="text-sm text-[rgba(0,0,0,0.5)] mt-0.5">Reduce unsold inventory by competing with resale market</p>
+                      </div>
+                    </label>
+                    {pricingConstraints.matchSecondary && !constraintsSubmitted && (
+                      <div className="ml-8 mt-2 flex items-center gap-1.5 text-sm">
+                        <span className="text-[rgba(0,0,0,0.65)]">Price at</span>
+                        <input
+                          type="number"
+                          min="50"
+                          max="150"
+                          value={secondaryPricePct}
+                          onChange={(e) => setSecondaryPricePct(e.target.value)}
+                          className="w-16 border border-[rgba(0,0,0,0.23)] rounded px-2 py-1 text-sm text-center focus:outline-none focus:border-[#4c65f0]"
+                        />
+                        <span className="text-[rgba(0,0,0,0.65)]">% of secondary prices by price level</span>
+                      </div>
+                    )}
+                  </div>
 
                   {/* Maintain Ladder */}
-                  <label className="flex items-start gap-3 cursor-pointer group p-4 rounded-lg border-2 border-[#4c65f0] bg-[rgba(76,101,240,0.02)]">
+                  <label className="flex items-start gap-3 cursor-pointer group">
                     <input
                       type="checkbox"
                       checked={pricingConstraints.maintainLadder}
@@ -1592,11 +1908,11 @@ function ChatPageContent() {
                       disabled={constraintsSubmitted}
                       className="w-5 h-5 mt-0.5 rounded border-2 border-[rgba(0,0,0,0.3)] text-[#4c65f0] focus:ring-[#4c65f0] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                     />
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-base text-black tracking-tight">Maintain season-plan discount ladder</span>
-                        <span className="text-xs font-bold text-[#4c65f0] bg-[rgba(76,101,240,0.1)] px-2 py-1 rounded">RECOMMENDED</span>
-                      </div>
+                    <div>
+                      <span className="text-base text-black tracking-tight group-hover:text-[#4c65f0] transition-colors">
+                        Maintain season-plan discount ladder
+                        <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-[rgba(76,101,240,0.1)] text-[#4c65f0]">Recommended</span>
+                      </span>
                       <p className="text-sm text-[rgba(0,0,0,0.5)] mt-0.5">Full season holders always pay less per game than partial, flex, and single-game buyers</p>
                     </div>
                   </label>
@@ -2193,11 +2509,11 @@ function ChatPageContent() {
 
               <div className="flex items-center justify-between mt-4">
                 <button className="hover:scale-110 transition-transform duration-200">
-                  <img
-                    src="https://www.figma.com/api/mcp/asset/a8379c75-080f-4c55-b535-f7b8235c7092"
-                    alt="Add"
-                    className="w-6 h-6"
-                  />
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[rgba(0,0,0,0.4)]">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="12" y1="8" x2="12" y2="16"/>
+                    <line x1="8" y1="12" x2="16" y2="12"/>
+                  </svg>
                 </button>
 
                 <div
@@ -2207,11 +2523,12 @@ function ChatPageContent() {
                   }}
                 >
                   <button className="hover:scale-110 transition-transform duration-200">
-                    <img
-                      src="https://www.figma.com/api/mcp/asset/31cb1876-b852-4648-8a81-6626adc8e393"
-                      alt="Voice"
-                      className="w-6 h-6"
-                    />
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[rgba(0,0,0,0.4)]">
+                      <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                      <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                      <line x1="12" y1="19" x2="12" y2="23"/>
+                      <line x1="8" y1="23" x2="16" y2="23"/>
+                    </svg>
                   </button>
 
                   {inputValue && (
@@ -2244,20 +2561,24 @@ function ChatPageContent() {
         {/* Header */}
         <div className="h-16 border-b border-[rgba(0,0,0,0.1)] px-6 flex items-center justify-between">
           <div className="flex items-center gap-4 flex-1">
-            <img
-              src="https://www.figma.com/api/mcp/asset/705c6ed5-17c8-4431-9f00-1bbd6ed49734"
-              alt="Campaign"
-              className="w-6 h-6"
-            />
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#4c65f0]">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+              <polyline points="10 9 9 9 8 9"/>
+            </svg>
             <h2 className="text-lg font-semibold text-black tracking-tight">New Campaign</h2>
           </div>
           <div className="flex items-center gap-6">
             <button className="hover:scale-110 transition-transform">
-              <img
-                src="https://www.figma.com/api/mcp/asset/d41048ce-d887-4c48-b01e-407dfbdc5dcf"
-                alt="Share"
-                className="w-6 h-6"
-              />
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="18" cy="5" r="3"/>
+                <circle cx="6" cy="12" r="3"/>
+                <circle cx="18" cy="19" r="3"/>
+                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+              </svg>
             </button>
             <button className="hover:scale-110 transition-transform">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="black">
@@ -2273,10 +2594,25 @@ function ChatPageContent() {
             <>
               {/* Pricing Campaign Sidebar */}
               {(() => {
-                const revenueValue = (112.5 - (pricingSliderValue / 100) * 14.8).toFixed(1);
-                const sellThrough = Math.round(78 + (pricingSliderValue / 100) * 17);
+                const revenueValue = (22.5 - (pricingSliderValue / 100) * 3.0).toFixed(1);
+                const sellThrough = (96 + (pricingSliderValue / 100) * 3).toFixed(1);
                 const tierLabel = tierStructure === 'conservative' ? '3' : tierStructure === 'balanced' ? '4' : '5';
                 const packageCount = Object.values(selectedPackages).filter(Boolean).length;
+
+                const activeConstraints: string[] = [];
+                if (pricingConstraints.capYoY) activeConstraints.push(`Cap YoY ≤${maxYoYIncrease}%`);
+                if (pricingConstraints.floorPrice) activeConstraints.push(`Floor $${floorPriceAmount}`);
+                if (pricingConstraints.matchSecondary) activeConstraints.push(`Secondary ≤${secondaryPricePct}%`);
+                if (pricingConstraints.maintainLadder) activeConstraints.push('Discount ladder');
+                if (pricingConstraints.premiumPricing) activeConstraints.push(`Premium +${premiumPct}%`);
+
+                const iconSeats = <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01"/><path d="M16 6h.01"/><path d="M12 6h.01"/><path d="M12 10h.01"/><path d="M12 14h.01"/><path d="M16 10h.01"/><path d="M16 14h.01"/><path d="M8 10h.01"/><path d="M8 14h.01"/></svg>;
+                const iconCalendar = <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>;
+                const iconLayers = <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>;
+                const iconPackage = <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>;
+                const iconTarget = <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>;
+                const iconShield = <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>;
+
                 return (
                   <>
                     <div className="inline-flex items-center px-3 h-8 border border-[rgba(0,0,0,0.15)] rounded bg-transparent">
@@ -2300,30 +2636,37 @@ function ChatPageContent() {
 
                     <div className="space-y-2">
                       <SectionCard
-                        icon="https://www.figma.com/api/mcp/asset/4a62c6bf-a456-4cb3-b835-815553d51470"
+                        icon={iconSeats}
                         title="Total Seats"
                         value="18,200 Capacity"
                       />
                       <SectionCard
-                        icon="https://www.figma.com/api/mcp/asset/913cffaa-f0bf-4fa0-b024-575a787b4760"
+                        icon={iconCalendar}
                         title="Home Games"
                         value="41 Games"
                       />
                       <SectionCard
-                        icon="https://www.figma.com/api/mcp/asset/1821a86c-cb32-46b4-94c7-66e989c3173f"
+                        icon={iconLayers}
                         title="Game Tiers"
                         value={`${tierLabel} Tiers`}
                       />
                       <SectionCard
-                        icon="https://www.figma.com/api/mcp/asset/f335fd27-7f35-400e-96f9-f544c70816df"
+                        icon={iconPackage}
                         title="Package Types"
                         value={`${packageCount} Offered`}
                       />
                       <SectionCard
-                        icon="https://www.figma.com/api/mcp/asset/1821a86c-cb32-46b4-94c7-66e989c3173f"
+                        icon={iconTarget}
                         title="Avg Sell-Through"
                         value={`${sellThrough}% Target`}
                       />
+                      {activeConstraints.length > 0 && (
+                        <SectionCard
+                          icon={iconShield}
+                          title="Pricing Rules"
+                          value={`${activeConstraints.length} Active`}
+                        />
+                      )}
                     </div>
                   </>
                 );
@@ -2333,8 +2676,22 @@ function ChatPageContent() {
             <>
               {/* STR Campaign Sidebar */}
               {(() => {
-                const revenueValue = (81.2 - (sliderValue / 100) * 10.1).toFixed(1);
-                const renewalRate = Math.round(67 + (sliderValue / 100) * 20);
+                const revenueValue = (78.0 - (sliderValue / 100) * 5.0).toFixed(1);
+                const renewalRate = (72 + (sliderValue / 100) * 16).toFixed(1);
+                const planLabels = [
+                  paymentPlans.payInFull && 'Pay-in-full',
+                  paymentPlans.plan1 && '12mo',
+                  paymentPlans.plan2 && '9mo',
+                  paymentPlans.plan3 && '6mo',
+                  paymentPlans.monthlySubscription && 'Monthly',
+                ].filter(Boolean);
+
+                const iconUsers = <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>;
+                const iconTarget = <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>;
+                const iconDollar = <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>;
+                const iconCalendar = <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>;
+                const iconCreditCard = <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>;
+                const iconShield = <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>;
 
                 return (
                   <>
@@ -2362,32 +2719,39 @@ function ChatPageContent() {
                     {/* Section Cards */}
                     <div className="space-y-2">
                       <SectionCard
-                        icon="https://www.figma.com/api/mcp/asset/4a62c6bf-a456-4cb3-b835-815553d51470"
+                        icon={iconUsers}
                         title="Target Accounts"
                         value="9,345 Season Ticket Holders"
                       />
                       <SectionCard
-                        icon="https://www.figma.com/api/mcp/asset/913cffaa-f0bf-4fa0-b024-575a787b4760"
+                        icon={iconTarget}
                         title="Renewal Target"
                         value={`${renewalRate}% Retention Rate`}
                       />
                       {checkboxSelections.cappingPrice && (
                         <SectionCard
-                          icon="https://www.figma.com/api/mcp/asset/1821a86c-cb32-46b4-94c7-66e989c3173f"
+                          icon={iconShield}
                           title="Price Cap"
                           value={`${priceCapPercentage || 0}% Maximum Increase`}
                         />
                       )}
                       <SectionCard
-                        icon="https://www.figma.com/api/mcp/asset/f335fd27-7f35-400e-96f9-f544c70816df"
+                        icon={iconCalendar}
                         title="Campaign Duration"
                         value="60-day renewal window"
                       />
-                      {(paymentPlans.plan1 || paymentPlans.plan2 || paymentPlans.plan3) && (
+                      {planLabels.length > 0 && (
                         <SectionCard
-                          icon="https://www.figma.com/api/mcp/asset/1821a86c-cb32-46b4-94c7-66e989c3173f"
+                          icon={iconCreditCard}
                           title="Payment Plans"
-                          value={`${[paymentPlans.plan1 && '12mo', paymentPlans.plan2 && '9mo', paymentPlans.plan3 && '6mo'].filter(Boolean).join(', ')} options`}
+                          value={`${planLabels.join(', ')} options`}
+                        />
+                      )}
+                      {requireFullUpfront !== null && (
+                        <SectionCard
+                          icon={iconDollar}
+                          title="Missed Payment Policy"
+                          value={requireFullUpfront === 'full' ? 'Full upfront required' : requireFullUpfront === 'higher-deposit' ? `${missedPaymentDeposit}% deposit required` : 'Auto-pay enforcement'}
                         />
                       )}
                     </div>
@@ -2422,19 +2786,18 @@ function ChatPageContent() {
               {/* Section Cards */}
               <div className="space-y-2">
                 {campaignContent.sidebar.sections.map((section, index) => {
-                  // Map icon names to actual icon URLs
-                  const iconMap: Record<string, string> = {
-                    'users': 'https://www.figma.com/api/mcp/asset/4a62c6bf-a456-4cb3-b835-815553d51470',
-                    'ticket': 'https://www.figma.com/api/mcp/asset/913cffaa-f0bf-4fa0-b024-575a787b4760',
-                    'alert': 'https://www.figma.com/api/mcp/asset/4a62c6bf-a456-4cb3-b835-815553d51470',
-                    'dollar': 'https://www.figma.com/api/mcp/asset/1821a86c-cb32-46b4-94c7-66e989c3173f',
-                    'message': 'https://www.figma.com/api/mcp/asset/f335fd27-7f35-400e-96f9-f544c70816df'
+                  const iconSvgs: Record<string, React.ReactNode> = {
+                    'users': <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>,
+                    'ticket': <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/></svg>,
+                    'alert': <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>,
+                    'dollar': <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>,
+                    'message': <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>,
                   };
 
                   return (
                     <SectionCard
                       key={index}
-                      icon={iconMap[section.icon] || iconMap['users']}
+                      icon={iconSvgs[section.icon] || iconSvgs['users']}
                       title={section.label}
                       value={section.value}
                     />
@@ -2453,41 +2816,52 @@ function ChatPageContent() {
               <ul className="text-sm text-black tracking-tight space-y-1 list-disc list-inside">
                 {generatingPricingCampaign ? (
                   <>
-                    <li>{pricingSliderValue < 40 ? 'Revenue-focused' : pricingSliderValue > 60 ? 'Attendance-focused' : 'Balanced'} pricing strategy targeting ${(112.5 - (pricingSliderValue / 100) * 14.8).toFixed(1)}MM revenue</li>
+                    <li>{pricingSliderValue < 40 ? 'Revenue-focused' : pricingSliderValue > 60 ? 'Attendance-focused' : 'Balanced'} pricing strategy targeting ${(22.5 - (pricingSliderValue / 100) * 3.0).toFixed(1)}MM revenue at {(96 + (pricingSliderValue / 100) * 3).toFixed(1)}% sell-through</li>
                     <li>{Object.entries(selectedPackages).filter(([, v]) => v).length} package types: {Object.entries(selectedPackages).filter(([, v]) => v).map(([k]) => {
-                      const labels: Record<string, string> = { fullSeason: 'Full', halfSeason: 'Half', quarterSeason: 'Quarter', fiveGame: '5-Game', flex: 'Flex', singleGame: 'Single', group: 'Group' };
+                      const labels: Record<string, string> = { fullSeason: 'Full Season', halfSeason: 'Half Season', quarterSeason: 'Quarter', fiveGame: '5-Game Mini', threeGame: '3-Game Mini', flex: 'Flex', singleGame: 'Single Game', group: `Group (${groupMinSize}+)` };
                       return labels[k] || k;
                     }).join(', ')}</li>
                     <li>{tierStructure.charAt(0).toUpperCase() + tierStructure.slice(1)} game tiering ({tierStructure === 'conservative' ? '3' : tierStructure === 'balanced' ? '4' : '5'} tiers)</li>
                     {pricingConstraints.capYoY && <li>YoY price increase capped at {maxYoYIncrease}%</li>}
                     {pricingConstraints.floorPrice && <li>Floor price set at ${floorPriceAmount} per ticket</li>}
                     {pricingConstraints.maintainLadder && <li>Discount ladder maintained across all package tiers</li>}
-                    {pricingConstraints.matchSecondary && <li>Secondary market price matching on low-demand games</li>}
+                    {pricingConstraints.matchSecondary && <li>Pricing at {secondaryPricePct}% of secondary market prices</li>}
+                    {pricingConstraints.premiumPricing && <li>Premium seating priced at +{premiumPct}% premium</li>}
+                    {selectedPackages.flex && <li>Flex plan: min {flexConfig.gameCount} games{flexConfig.requireTierMix ? `, ${flexConfig.tierCount}-tier mix required` : ''}{flexConfig.progressiveDiscount ? ', progressive discounting' : ''}</li>}
                     <li>Go-to-market: Season plans Apr 1 → Single game Jun 1</li>
                   </>
                 ) : generatingCampaign ? (
                   <>
-                    <li>Targeted {Math.round(67 + (sliderValue / 100) * 20)}% renewal rate with {sliderValue < 40 ? 'revenue-first' : sliderValue > 60 ? 'retention-first' : 'balanced'} approach</li>
+                    <li>Targeted {(72 + (sliderValue / 100) * 16).toFixed(1)}% renewal rate with {sliderValue < 40 ? 'revenue-first' : sliderValue > 60 ? 'retention-first' : 'balanced'} approach, projecting ${(78.0 - (sliderValue / 100) * 5.0).toFixed(1)}MM revenue</li>
                     {checkboxSelections.longtimeMembers && <li>Prioritized longtime member recognition with exclusive perks</li>}
                     {checkboxSelections.cappingPrice && <li>Capped price increases at {priceCapPercentage || 0}% to maintain affordability</li>}
                     {checkboxSelections.upsellingQuarterToHalf && <li>Created quarter-to-half season upgrade path</li>}
                     {checkboxSelections.upsellingHalfToFull && <li>Enabled half-to-full season conversion opportunity</li>}
                     {checkboxSelections.crossSellAtRisk && <li>Cross-sell single game subscriptions to non-renewals</li>}
-                    {(paymentPlans.plan1 || paymentPlans.plan2 || paymentPlans.plan3) && (
-                      <li>Offering {[
+                    {checkboxSelections.seatRelocation && <li>Seat relocation incentives for renewing members</li>}
+                    {checkboxSelections.referralBonus && <li>Referral bonus: ${referralCreditAmount} credit per referred renewal</li>}
+                    {checkboxSelections.earlyAccessPerks && <li>Early access perks for renewing season ticket holders</li>}
+                    {checkboxSelections.winBackLapsed && <li>Win-back campaign targeting lapsed season ticket holders</li>}
+                    {(paymentPlans.plan1 || paymentPlans.plan2 || paymentPlans.plan3 || paymentPlans.payInFull || paymentPlans.monthlySubscription) && (
+                      <li>Payment options: {[
+                        paymentPlans.payInFull && `pay-in-full (${payInFullDiscount}% discount)`,
                         paymentPlans.plan1 && '12-month',
                         paymentPlans.plan2 && '9-month (recommended)',
-                        paymentPlans.plan3 && '6-month'
-                      ].filter(Boolean).join(', ')} payment plan options</li>
+                        paymentPlans.plan3 && '6-month',
+                        paymentPlans.monthlySubscription && 'monthly subscription'
+                      ].filter(Boolean).join(', ')}</li>
                     )}
                     {requireFullUpfront !== null && (
-                      <li>{requireFullUpfront ? 'Required full upfront payment for fans who missed deadlines' : 'Extended payment plans to all fans, including those who missed deadlines'}</li>
+                      <li>{requireFullUpfront === 'full' ? 'Required full upfront payment for fans who missed deadlines' : requireFullUpfront === 'higher-deposit' ? `Required ${missedPaymentDeposit}% deposit for fans who missed deadlines` : 'Standard terms with stricter auto-pay for fans who missed deadlines'}</li>
                     )}
-                    {(optOutOptions.discountCredits || optOutOptions.offerHalfQuarter || optOutOptions.freeUpgrades) && (
+                    {(optOutOptions.discountCredits || optOutOptions.offerHalfQuarter || optOutOptions.freeUpgrades || optOutOptions.waitlistPriority || optOutOptions.pauseSeason || optOutOptions.exitSurvey || optOutOptions.repOutreach) && (
                       <li>Retention offers for opt-outs: {[
                         optOutOptions.discountCredits && 'unused credit discounts',
                         optOutOptions.offerHalfQuarter && 'partial season plans',
-                        optOutOptions.freeUpgrades && '3 free upgrades'
+                        optOutOptions.freeUpgrades && '3 free upgrades',
+                        optOutOptions.waitlistPriority && 'waitlist priority warning',
+                        optOutOptions.pauseSeason && '1-year membership freeze',
+                        optOutOptions.repOutreach && 'personal rep outreach'
                       ].filter(Boolean).join(', ')}</li>
                     )}
                     <li>Multi-channel approach: email primary, SMS reminders</li>
@@ -2655,10 +3029,10 @@ function ChatPageContent() {
   );
 }
 
-function SectionCard({ icon, title, value }: { icon: string; title: string; value: string }) {
+function SectionCard({ icon, title, value }: { icon: React.ReactNode; title: string; value: string }) {
   return (
     <div className="bg-[#f4f4f4] rounded px-4 py-3 flex items-center gap-4">
-      <img src={icon} alt={title} className="w-6 h-6" />
+      <div className="w-6 h-6 flex-shrink-0 text-[#4c65f0]">{icon}</div>
       <div className="flex-1 text-sm font-semibold text-black tracking-tight">{title}</div>
       <div className="text-sm font-semibold text-[#4c65f0] tracking-tight">{value}</div>
     </div>

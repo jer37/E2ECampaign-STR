@@ -27,9 +27,9 @@ export default function RootLayout({
                 </button>
 
                 <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-full overflow-hidden">
+                  <div className="w-10 h-10 rounded-full overflow-hidden bg-[#0C2340] flex-shrink-0">
                     <img
-                      src="https://www.figma.com/api/mcp/asset/da5a1a78-2b6d-4e9b-a5ea-96adc30d80ae"
+                      src="https://a.espncdn.com/i/teamlogos/nba/500/min.png"
                       alt="Minnesota Timberwolves Logo"
                       className="w-full h-full object-cover"
                     />

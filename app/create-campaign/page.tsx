@@ -116,11 +116,11 @@ export default function CreateCampaignPage() {
 
               <div className="flex items-center justify-between mt-4">
                 <button className="hover:scale-110 transition-transform duration-200">
-                  <img
-                    src="https://www.figma.com/api/mcp/asset/bb2bca4e-f812-45fb-8205-88cb33183c15"
-                    alt="Add"
-                    className="w-6 h-6"
-                  />
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[rgba(0,0,0,0.4)]">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="12" y1="8" x2="12" y2="16"/>
+                    <line x1="8" y1="12" x2="16" y2="12"/>
+                  </svg>
                 </button>
 
                 <div
@@ -131,11 +131,12 @@ export default function CreateCampaignPage() {
                 >
                   {/* Microphone - always visible */}
                   <button className="hover:scale-110 transition-transform duration-200">
-                    <img
-                      src="https://www.figma.com/api/mcp/asset/138ad392-562f-4c05-a7aa-22ebfedf38eb"
-                      alt="Voice"
-                      className="w-6 h-6"
-                    />
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[rgba(0,0,0,0.4)]">
+                      <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                      <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                      <line x1="12" y1="19" x2="12" y2="23"/>
+                      <line x1="8" y1="23" x2="16" y2="23"/>
+                    </svg>
                   </button>
 
                   {/* Submit button - slides in when text is entered */}

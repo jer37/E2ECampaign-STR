@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import OpportunityCard from './OpportunityCard';
 import { getActiveRecommendations, OpportunityData } from '../lib/mockRecommendations';
 
@@ -30,6 +31,104 @@ export default function GoalsView() {
 
   return (
     <div className="px-8 py-6">
+      {/* Season Ticket Renewal CTA Banner */}
+      <div className="pb-6">
+        <div
+          className="relative overflow-hidden rounded-xl border-2 border-[#4c65f0] p-6 flex items-center justify-between"
+          style={{
+            background: 'linear-gradient(135deg, rgba(76, 101, 240, 0.08) 0%, rgba(204, 255, 0, 0.08) 100%)'
+          }}
+        >
+          <div className="flex items-start gap-4">
+            <div className="flex-shrink-0 w-12 h-12 rounded-full bg-[#4c65f0] flex items-center justify-center">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"
+                  fill="white" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-[#4c65f0] text-white text-xs font-semibold">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                    <line x1="16" y1="2" x2="16" y2="6"/>
+                    <line x1="8" y1="2" x2="8" y2="6"/>
+                    <line x1="3" y1="10" x2="21" y2="10"/>
+                    <polyline points="17 14 12 14 12 19"/>
+                  </svg>
+                  Annual Planning Cycle
+                </span>
+              </div>
+              <h3 className="text-xl font-bold text-black tracking-tight">
+                Time to Launch Season Ticket Renewals
+              </h3>
+              <p className="text-base text-[rgba(0,0,0,0.75)] tracking-tight max-w-2xl">
+                Based on your renewal cycle, now is the optimal time to engage season ticket holders.
+                Launch a targeted renewal campaign to secure commitments for next season and maximize early bird adoption.
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/chat?workflow=str"
+            className="flex-shrink-0 bg-[#4c65f0] hover:bg-[#3d52c9] text-white px-8 py-3 rounded-full font-semibold text-base tracking-tight transition-all hover:scale-105 shadow-lg flex items-center gap-2"
+          >
+            <span>Create Campaign</span>
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="white">
+              <path d="M7.5 15l5-5-5-5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </Link>
+        </div>
+      </div>
+
+      {/* On-Sale Pricing & Packaging CTA Banner */}
+      <div className="pb-6">
+        <div
+          className="relative overflow-hidden rounded-xl border-2 border-[#4c65f0] p-6 flex items-center justify-between"
+          style={{
+            background: 'linear-gradient(135deg, rgba(76, 101, 240, 0.05) 0%, rgba(76, 101, 240, 0.02) 100%)'
+          }}
+        >
+          <div className="flex items-start gap-4">
+            <div className="flex-shrink-0 w-12 h-12 rounded-full bg-[#4c65f0] flex items-center justify-center">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <circle cx="7" cy="7" r="1.5" fill="white"/>
+              </svg>
+            </div>
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-[#4c65f0] text-white text-xs font-semibold">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                    <line x1="16" y1="2" x2="16" y2="6"/>
+                    <line x1="8" y1="2" x2="8" y2="6"/>
+                    <line x1="3" y1="10" x2="21" y2="10"/>
+                    <polyline points="17 14 12 14 12 19"/>
+                  </svg>
+                  Annual Planning Cycle
+                </span>
+              </div>
+              <h3 className="text-xl font-bold text-black tracking-tight">
+                Configure On-Sale Pricing & Packaging
+              </h3>
+              <p className="text-base text-[rgba(0,0,0,0.75)] tracking-tight max-w-2xl">
+                18,200 seats across 41 home games — Set single game pricing, flex plans, mini plans, and
+                season packages with AI-optimized game tiering for the 2026-27 on-sale.
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/chat?workflow=pricing"
+            className="flex-shrink-0 bg-[#4c65f0] hover:bg-[#3d52c9] text-white px-8 py-3 rounded-full font-semibold text-base tracking-tight transition-all hover:scale-105 shadow-lg flex items-center gap-2"
+          >
+            <span>Configure Pricing</span>
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="white">
+              <path d="M7.5 15l5-5-5-5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </Link>
+        </div>
+      </div>
+
       {/* Section Header */}
       <div
         className="mb-6 transition-all duration-700 ease-out"

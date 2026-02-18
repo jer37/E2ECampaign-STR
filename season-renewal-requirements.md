@@ -8,174 +8,29 @@ The Season Ticket Renewal Campaign is an end-to-end flow that allows users to go
 
 ## Flow Summary
 
-**Banner (Campaigns page)** → **Chat interface with AI thinking module** → **Campaign strategy + sidebar with Launch/Edit/Save actions** → **Redirect back to Campaigns (Active tab)**
+**Banner (Campaigns page → Season Opportunities tab)** → **Chat interface with multi-step guided inputs** → **AI thinking module + campaign strategy + sidebar with Launch/Edit/Save actions** → **Redirect back to Campaigns (Active tab)**
 
 ---
 
 ## Step 1: Banner on Campaigns Page
 
-**Location:** `/campaigns` → Active tab
+**Location:** `/campaigns` → Season Opportunities tab
 
 **What the user sees:**
 
-- A prominent banner at the top of the Active tab content area (below the tab bar, above the campaigns table)
+- A prominent banner at the top of the Season Opportunities tab content area (rendered via `GoalsView` component)
 - Styled as a horizontal card with a gradient background (`from-[rgba(76,101,240,0.06)]` to `from-[rgba(76,101,240,0.02)]`) and a subtle blue border
 - Left side: A blue circular icon with a sparkle/star SVG
 - Center content:
+  - Pill badge: **"Annual Planning Cycle"** with calendar icon (blue rounded pill, `bg-[#4c65f0]`)
   - Bold blue title: **"Season Ticket Renewal Campaign"**
   - Description text: "4,120 holders entering renewal window — Build AI-powered renewal strategy for 2026-27 season"
 - Right side:
   - "Mar 15 deadline" label
   - Right-arrow chevron icon (animates on hover)
-- The entire banner is a clickable `<Link>` that navigates to `/chat?rec=renewal-1`
+- The entire banner is a clickable `<Link>` that navigates to `/chat?workflow=str`
 
 **Hover behavior:** Border darkens, shadow appears, arrow shifts right
-
----
-
-## Step 2: Chat Interface — AI Thinking Module
-
-**Location:** `/chat?rec=renewal-1`
-
-**Entry behavior:**
-
-- The chat page reads the `rec` URL parameter (`renewal-1`)
-- Loads the corresponding recommendation from `mockRecommendations.ts` and campaign content from `campaignContent.ts`
-- The recommendation's `chatPrompt` is displayed as the user's message (right-aligned, gray bubble)
-- An "AI Recommendation" badge (sparkle icon + blue text) appears above the user message since it came from a recommendation
-
-**User message displayed:**
-
-> "Launch a comprehensive season ticket renewal campaign for 2026-27. We have 4,120 current holders with renewal deadline March 15. Build a multi-segment strategy with early-bird incentives, at-risk account intervention, and loyalty recognition to maximize renewal rate from 82% baseline to 90%+ target."
-
-**AI Thinking Module (animated):**
-
-After ~800ms, a floating "Building Campaign Strategy" card appears with:
-- A pulsing blue avatar with a ping animation
-- A progress bar that fills as steps complete
-- 6 sequential thinking steps, each with:
-  - A generic text that appears first (e.g., "Analyzing season ticket holder database")
-  - A transition to specific text after a delay (e.g., "Profiling 4,120 current holders by tenure, engagement score, and renewal likelihood")
-  - Reasoning text that appears below in blue (e.g., explains the segmentation rationale)
-  - A step indicator icon: pulsing blue dot (active), green checkmark with pop animation (completed), or empty circle (pending)
-  - Steps fade to 50% opacity once completed
-
-**Thinking steps for renewal-1:**
-
-1. Analyzing → Profiling 4,120 holders by tenure, engagement, renewal likelihood
-2. Calculating risk → Identifying 420 at-risk accounts (82% baseline → 90% target)
-3. Designing incentives → 4-tier early-bird program: Lock-In, Loyalty Upgrade, Flex Add-On, Legacy
-4. Building outreach → Multi-channel: rep calls (at-risk) + email + app + direct mail
-5. Modeling revenue → 90% renewal rate → 3,708 renewals → $6.8M committed revenue
-6. Setting timeline → 6-week campaign: Early-bird (Feb 10-28) → Standard (Mar 1-15) → Final push
-
-**Total thinking animation duration:** ~11 seconds
-
----
-
-## Step 3: AI Campaign Response
-
-**Location:** Same `/chat` page, below the thinking module
-
-After thinking completes (~11.1 seconds), the thinking module disappears and the AI response fades in with staggered animations:
-
-**Response content includes:**
-
-1. **Intro paragraph** — Summarizes the campaign: 4,120 holders, 4 tenure segments, 420 at-risk accounts, 4-tier incentive program, March 15 deadline
-
-2. **Data table** — 4-column table with segments:
-   | Holder Segment | Incentive Package | Will Test | Outreach Channel |
-   |---|---|---|---|
-   | Loyal Veterans (10+ yrs, 1,240) | Legacy recognition + seat lock | Recognition vs upgrade offer | Personal letter + rep call |
-   | Established (5-9 yrs, 1,380) | Loyalty seat upgrade | Upgrade vs 5% discount | Email sequence + app |
-   | Developing (2-4 yrs, 980) | Flex guest pass add-on | Flexibility vs pricing | Email + SMS + app |
-   | First-Year (520) | 5% early-bird discount | Discount vs experience perks | Rep call + email + event |
-
-3. **Strategy paragraph** — Detailed breakdown of each segment's approach, testing variables, and messaging
-
-4. **Testing paragraph + Testing card** — "Active Testing & Optimization" card listing 5 A/B test variables (incentive type, urgency framing, outreach cadence, payment options, social proof)
-
-5. **Inventory paragraph** — Seat inventory details, upgrade pool, parking passes, guest pass allocation
-
-6. **Optimization card** — "Auto-Optimization Rules" with 5 conditional rules (e.g., if early-bird >65% → reduce discount)
-
-7. **Conclusion paragraph** — Launch plan, timeline, projected $6.8M revenue at 90% renewal rate + $340K upgrade revenue
-
----
-
-## Step 4: Campaign Sidebar (Right Panel)
-
-**Location:** Right side of chat page, slides in ~500ms after the AI response starts appearing
-
-**Sidebar contents (top to bottom):**
-
-- **Header bar** — Star icon + "New Campaign" title, share button, close button
-- **Badge** — Green "Renewal Campaign" status badge
-- **Title & Revenue** —
-  - Title: "Season Ticket Renewal Campaign"
-  - Subtitle: "4,120 Holders • 4 Segments • Mar 15 Deadline"
-  - Revenue: "$6.8M" in green with "Committed renewal revenue (90% target)" label
-- **Section cards** (gray background, icon + label + value):
-  - Season Ticket Holders → 4,120 Accounts
-  - At-Risk Accounts → 420 Flagged
-  - Avg. Account Value → $4,200/season
-  - Outreach → Multi-Channel
-- **Key Decisions card** — Bordered card listing 5 key decisions made by the AI
-- **Action buttons:**
-  1. **"Launch Campaign"** — Blue button, saves campaign as Active to localStorage, redirects to `/campaigns?tab=active`
-  2. **"Edit Campaign"** — Black button, scrolls to and focuses the chat input textarea
-  3. **"Save as Draft"** — Outlined button, saves campaign as Draft to localStorage, redirects to `/campaigns?tab=active`
-- **Disclaimer** — "Campaign will go live immediately. Landing pages will be published and messages scheduled."
-
----
-
-## Step 5: Post-Launch / Post-Save
-
-**What happens on Launch or Save as Draft:**
-
-- Campaign is saved to `localStorage` via `saveCampaign()` from `lib/campaignsStore.ts`
-- Campaign object includes: title, description, status (Active or Draft), segment, type, revenue projections, analytics placeholders, and `createdFrom: 'renewal-1'`
-- User is redirected to `/campaigns?tab=active` where the new campaign appears in the campaigns table
-
----
-
-## Technical Details
-
-### Key Files
-
-| File | Purpose |
-|------|---------|
-| `app/campaigns/page.tsx` | Contains the Season Ticket Renewal banner (lines 127-154) |
-| `app/chat/page.tsx` | Full chat interface: thinking module, AI response, sidebar, action buttons |
-| `lib/campaignContent.ts` | Contains `renewal1Content` object with all thinking steps, response text, data tables, sidebar content |
-| `lib/mockRecommendations.ts` | Contains `renewal-1` recommendation with metadata, chatPrompt, impact/urgency data |
-| `lib/campaignsStore.ts` | localStorage CRUD for saving/loading campaigns |
-| `components/Sidebar.tsx` | App-wide navigation sidebar |
-| `components/TabBar.tsx` | Campaigns page tab navigation |
-
-### URL & Routing
-
-- Banner links to: `/chat?rec=renewal-1`
-- Chat page reads `rec` param via `useSearchParams()`
-- Recommendation data loaded via `getRecommendationById('renewal-1')`
-- Campaign content loaded via `getCampaignContent('renewal-1')`
-- After launch/save: redirects to `/campaigns?tab=active`
-
-### State Management
-
-- Campaign data stored in `localStorage` (no backend)
-- UI state managed with React `useState` and `useEffect` hooks
-- Thinking animation orchestrated via cascading `setTimeout` calls with configurable delays/durations per step
-- Sidebar slide-in triggered after thinking completes (~11.6 seconds)
-
-### Design System
-
-- Primary blue: `#4c65f0`
-- Success green: `#007a47`
-- Error red: `#d32f2f`
-- Accent lime: `#ccff00`
-- Fonts: Inter (headings), Roboto (inputs)
-- Animations: `fade-in`, `slide-in`, `slide-in-left`, `check-pop`, `pulse-glow`, `pulse`, `ping`
 
 ---
 
@@ -183,11 +38,9 @@ After thinking completes (~11.1 seconds), the thinking module disappears and the
 
 **Location:** `/chat?workflow=str`
 
-**Source code location:** `/Users/joelresnicow/E2ECampaign/app/chat/page.tsx` (served on port 3000)
+**Source code location:** `app/chat/page.tsx`
 
-This is an alternative, multi-step conversational workflow for building a Season Ticket Renewal campaign. Instead of immediately generating a campaign, the AI walks the user through a series of guided questions to collect their goals and preferences before building the strategy.
-
-**Note:** The workspace copy at `/Users/joelresnicow/Claud.md/E2ECampaign` does **not** contain this workflow. The STR code exists only in `/Users/joelresnicow/E2ECampaign`.
+This is the primary multi-step conversational workflow for building a Season Ticket Renewal campaign. The AI walks the user through guided questions to collect goals and preferences before building the strategy.
 
 ---
 
@@ -199,11 +52,15 @@ This is an alternative, multi-step conversational workflow for building a Season
 2. **Context text:** "As a reminder, here's your renewal performance for the past 3 seasons:" (fades in at 800ms)
 3. **Historical table** (fades in at 800ms) with 3 seasons of data:
 
-| Season | Renewal Rate | Full Season | Half Season | Flex Plans | Total Revenue |
-|--------|-------------|-------------|-------------|------------|---------------|
-| 2023 | 74% | $38.2MM | $12.8MM | $6.9MM | $57.9MM |
-| 2024 | 76% | $42.1MM | $14.5MM | $7.8MM | $64.4MM |
-| 2025 | 79% | $46.8MM | $16.2MM | $8.4MM | $71.4MM |
+| Season | Accounts | Renewal Rate | Full Season | Half Season | Flex Plans | Total Revenue | Avg/Acct |
+|--------|----------|-------------|-------------|-------------|------------|---------------|----------|
+| 2023 | 8,200 | 74% | $38.2MM | $12.8MM | $6.9MM | $57.9MM | $7,061 |
+| 2024 | 8,800 | 76% | $42.1MM | $14.5MM | $7.8MM | $64.4MM | $7,318 |
+| 2025 | 9,345 | 79% | $46.8MM | $16.2MM | $8.4MM | $71.4MM | $7,639 |
+
+**State variable:** `showHistoricalTable`
+
+---
 
 ### STR Step 2: Goal Slider
 
@@ -215,52 +72,106 @@ This is an alternative, multi-step conversational workflow for building a Season
   - **Right label:** "Maximize Renewals" — "Focus on retention rate and fan perceived value"
   - **Range slider** (0-100) with gradient from blue (#4c65f0) to lime (#ccff00)
   - **Dynamic metrics** that update as the slider moves:
-    - **Forecasted Revenue:** Calculated as `${ 81.2 - (sliderValue / 100) * 10.1 }MM` (ranges from ~$81.2MM to ~$71.1MM)
-    - **Forecasted Renewal Rate:** Calculated as `{ 67 + (sliderValue / 100) * 20 }%` (ranges from 67% to 87%)
+    - **Forecasted Revenue:** `${(78.0 - (sliderValue / 100) * 5.0).toFixed(1)}MM` — ranges from $78.0MM (max revenue) to $73.0MM (max renewals)
+    - **Forecasted Renewal Rate:** `{(72 + (sliderValue / 100) * 16).toFixed(1)}%` — ranges from 72.0% to 88.0%
+    - **Avg Rev / Account:** dynamically calculated from revenue and projected accounts
+    - **Implied churn text:** "~{X} accounts would not renew at this setting" — makes churn tangible
   - **Continue button** — Submits the slider value and advances to the next step
+
+**State variables:** `sliderValue` (default: 50), `sliderSubmitted`
+
+---
 
 ### STR Step 3: Additional Preferences (Checkboxes)
 
 **What the user sees after clicking Continue:**
 
 - Question: "What else is important to you?"
-- Checkbox options:
-  - Renewals of longtime members
-  - Capping Maximum Price Increase (with conditional numeric input for percentage when checked)
-  - Upselling from Quarter to Half Season
-  - Upselling from Half to Full Season
-  - Cross Sell Subscriptions to At Risk Accounts
+
+**Checkbox options (all unchecked by default unless noted):**
+
+1. **Renewals of longtime members**
+2. **Capping Maximum Price Increase** — with "Recommended: 12%" text next to the checkbox. When checked, a conditional numeric input appears for max % (default: `12`). State: `priceCapPercentage`
+3. **Upselling from Quarter to Half Season**
+4. **Upselling from Half to Full Season**
+5. **Cross Sell Subscriptions to At Risk Accounts**
+6. **Seat relocation incentives** — with "Recommended" badge
+7. **Referral bonus for renewals** — with "Recommended" badge. When checked, a conditional input for referral credit amount appears (default: `$200`). State: `referralCreditAmount`
+8. **Early access perks** — with "Recommended" badge
+9. **Win-back campaign for lapsed season ticket holders** — with "New" badge
+10. **Renewal Default** — radio buttons: "Auto-renew with opt-out" (default) / "Require active renewal". State: `autoRenewalDefault` (true = auto-renew)
+
+**State variable:** `checkboxSelections` (object with boolean keys for each option)
+
 - **Continue button**
+
+---
 
 ### STR Step 4: Payment Plans
 
 **What the user sees after clicking Continue:**
 
 - Question: "What kind of payment plans do you want to make available?"
-- Three checkbox plan options:
-  1. 10% upfront, with 12 equal monthly payments
-  2. 15% upfront with 9 equal payments — **[RECOMMENDED]** (highlighted with blue border)
-  3. 10% upfront with 6 equal payments
+
+**Plan options:**
+
+1. **10% upfront, with 12 equal monthly payments** — State: `paymentPlans.plan1`
+2. **15% upfront with 9 equal payments** — **[RECOMMENDED]** — State: `paymentPlans.plan2`
+3. **10% upfront with 6 equal payments** — State: `paymentPlans.plan3`
+4. **Pay-in-full discount** — **[Recommended]** badge. When checked, a conditional input for discount percentage appears (default: `5%`). State: `paymentPlans.payInFull`, `payInFullDiscount`
+5. **Monthly subscription — $0 upfront, 12 equal payments** — **[New]** badge. State: `paymentPlans.monthlySubscription`
+
+**Additional controls:**
+
+- **"Require credit card on file for all payment plans"** checkbox — default: checked. State: `requireCardOnFile`
+- **Cash flow estimate indicator** — dynamically updates below the plan selection based on selected plans, showing revenue timing (e.g., "~55% of revenue collected by opening day")
+
+**State variable:** `paymentPlans` (object with boolean keys), `payInFullDiscount`, `requireCardOnFile`
+
 - **Continue button**
 
-### STR Step 5: Full Upfront Payment Question
+---
+
+### STR Step 5: Missed Payment Policy
 
 **What the user sees:**
 
-- Question: "Require full upfront payment for fans who missed payment deadlines last season?"
-- Two buttons: **Yes** / **No**
-- After selection, the chosen answer is displayed in a blue confirmation badge
+- **Contextual data:** "142 accounts missed payment deadlines last season, representing $1.1MM in delayed collections."
+- Question: "For fans who missed payment deadlines last season, what's your approach?"
+
+**Three button options (graduated):**
+
+1. **"Require full upfront payment"** — Strictest option. State value: `'full'`
+2. **"Require higher deposit (25-50%)"** — **[Recommended]** badge. When selected, a conditional input for deposit percentage appears (default: `35%`). State value: `'higher-deposit'`, `missedPaymentDeposit`
+3. **"Standard terms with stricter auto-pay enforcement"** — Gentlest option. State value: `'standard'`
+
+After selection, the chosen answer is displayed in a blue confirmation badge.
+
+**State variable:** `requireFullUpfront` (type: `string | null` — `'full'`, `'higher-deposit'`, or `'standard'`)
+
+---
 
 ### STR Step 6: Opt-Out Options
 
 **What the user sees:**
 
 - Question: "For fans who opt out of auto-renewal, what options do you want to provide to them?"
-- Checkbox options:
-  - Offer discount equivalent to unused credits from prior season
-  - Offer half or quarter season plans on the same seat
-  - Offer 3 free upgrades to next best price level — **[RECOMMENDED]** (highlighted with blue border)
+
+**Checkbox options:**
+
+1. **Offer discount equivalent to unused credits from prior season** — State: `optOutOptions.discountCredits`
+2. **Offer half or quarter season plans on the same seat** — State: `optOutOptions.offerHalfQuarter`
+3. **Offer 3 free upgrades to next best price level** — **[Recommended]** badge. State: `optOutOptions.freeUpgrades`
+4. **Notify fans they'll lose seat priority and go to back of waitlist** — **[Recommended]** badge. State: `optOutOptions.waitlistPriority`
+5. **Offer 1-year membership freeze with guaranteed seat return** — **[New]** badge. State: `optOutOptions.pauseSeason`
+6. **Require exit survey before processing cancellation** — State: `optOutOptions.exitSurvey`
+7. **Route to account rep for personal outreach before processing** — **[Recommended]** badge. State: `optOutOptions.repOutreach`
+
+**State variable:** `optOutOptions` (object with boolean keys)
+
 - **Continue button** — Clicking this triggers campaign generation
+
+---
 
 ### STR Step 7: AI Thinking Module + Campaign Generation
 
@@ -280,27 +191,172 @@ After the final Continue, the system:
    - Segment table with dynamically generated rows based on selections (e.g., "Longtime Loyalists" row only appears if that checkbox was selected)
    - Strategy, testing, inventory, and conclusion paragraphs all personalized to selections
 
-4. **Sidebar** slides in with STR-specific content:
-   - Badge: "Season Ticket Renewal"
-   - Title: "2026 Season Ticket Renewal Campaign"
-   - Revenue: dynamically calculated from slider
-   - Section cards: Target Accounts (9,345), Renewal Target (dynamic %), Price Cap (if selected), Campaign Duration, Payment Plans
-   - Key Decisions: dynamically built from all user selections
-   - Action buttons: Launch Campaign, Edit Campaign, Save as Draft
+4. **Sidebar** slides in with STR-specific content (see below)
 
-### STR Launch Behavior
+---
 
-When "Launch Campaign" is clicked:
-- Saves campaign to localStorage with `createdFrom: 'str-workflow'`
-- Campaign title: "2026 Season Ticket Renewal Campaign"
-- Projected revenue calculated from slider value
-- Redirects to `/campaigns?tab=active`
+## Campaign Sidebar (Right Panel)
+
+**Location:** Right side of chat page, slides in ~500ms after the AI response starts appearing
+
+**Sidebar header:**
+
+- Document icon (inline SVG) + "New Campaign" title
+- Share button (share/network icon, inline SVG)
+- Close button (X icon)
+
+**Sidebar contents:**
+
+- **Badge** — Green "Season Ticket Renewal" status badge
+- **Title & Revenue** —
+  - Title: "2026 Season Ticket Renewal Campaign"
+  - Subtitle: "Multi-segment retention strategy"
+  - Revenue: dynamically calculated `${(78.0 - (sliderValue / 100) * 5.0).toFixed(1)}MM` in green
+- **Section cards** (gray background, inline SVG icon + label + value):
+  - People/users icon → **Target Accounts** → "9,345 Season Ticket Holders"
+  - Bullseye/target icon → **Renewal Target** → `{renewalRate}% Retention Rate` (dynamic from slider)
+  - Shield icon → **Price Cap** → `{priceCapPercentage}% Maximum Increase` (only shown if `cappingPrice` checkbox is checked)
+  - Calendar icon → **Campaign Duration** → "60-day renewal window"
+  - Credit card icon → **Payment Plans** → dynamic list of selected plans (e.g., "Pay-in-full, 12mo, Monthly options")
+  - Dollar sign icon → **Missed Payment Policy** → reflects selection ("Full upfront required" / "{X}% deposit required" / "Auto-pay enforcement")
+
+- **Key Decisions card** — dynamically built from all user selections:
+  - Renewal rate and revenue targets
+  - Longtime member recognition (if selected)
+  - Price cap percentage (if selected)
+  - Upsell paths (quarter→half, half→full)
+  - Cross-sell to at-risk (if selected)
+  - Seat relocation incentives (if selected)
+  - Referral bonus with credit amount (if selected)
+  - Early access perks (if selected)
+  - Win-back for lapsed STH (if selected)
+  - Payment options with full details
+  - Missed payment policy
+  - Retention offers for opt-outs (all selected options listed)
+
+- **Action buttons:**
+  1. **"Launch Campaign"** — Blue button, saves campaign as Active to localStorage, redirects to `/campaigns?tab=active`
+  2. **"Edit Campaign"** — Black button, scrolls to and focuses the chat input textarea
+  3. **"Save as Draft"** — Outlined button, saves campaign as Draft to localStorage, redirects to `/campaigns?tab=active`
+- **Disclaimer** — "Campaign will go live immediately. Landing pages will be published and messages scheduled."
+
+---
+
+## Post-Launch / Post-Save
+
+**What happens on Launch or Save as Draft:**
+
+- Campaign is saved to `localStorage` via `saveCampaign()` from `lib/campaignsStore.ts`
+- Campaign object includes: title, description, status (Active or Draft), segment, type, revenue projections, analytics placeholders, and `createdFrom: 'str-workflow'`
+- User is redirected to `/campaigns?tab=active` where the new campaign appears in the campaigns table
+
+---
+
+## Technical Details
+
+### Key Files
+
+| File | Purpose |
+|------|---------|
+| `app/campaigns/page.tsx` | Campaigns dashboard with tab navigation; Season Opportunities tab renders `GoalsView` component containing the STR banner |
+| `components/GoalsView.tsx` | Contains the Season Ticket Renewal CTA banner (and the Pricing CTA banner), both with "Annual Planning Cycle" pill badges |
+| `app/chat/page.tsx` | Full chat interface: multi-step STR workflow inputs, thinking module, AI response, sidebar, action buttons |
+| `lib/campaignContent.ts` | Contains campaign content objects with thinking steps, response text, data tables, sidebar content |
+| `lib/mockRecommendations.ts` | Contains recommendation metadata |
+| `lib/campaignsStore.ts` | localStorage CRUD for saving/loading campaigns |
+| `components/Sidebar.tsx` | App-wide navigation sidebar |
+| `components/TabBar.tsx` | Campaigns page tab navigation |
+| `app/layout.tsx` | Root layout with header; contains Timberwolves logo (ESPN CDN) |
+
+### URL & Routing
+
+- Banner links to: `/chat?workflow=str`
+- Chat page reads `workflow` param via `useSearchParams()`
+- When `workflow === 'str'`, render the multi-step STR workflow
+- After launch/save: redirects to `/campaigns?tab=active`
+
+### State Management
+
+All STR state variables in `app/chat/page.tsx`:
+
+```typescript
+sliderValue (number, 0-100, default: 50)
+sliderSubmitted (boolean)
+checkboxSelections ({
+  longtimeMembers: boolean,
+  cappingPrice: boolean,
+  upsellingQuarterToHalf: boolean,
+  upsellingHalfToFull: boolean,
+  crossSellAtRisk: boolean,
+  seatRelocation: boolean,
+  referralBonus: boolean,
+  earlyAccessPerks: boolean,
+  winBackLapsed: boolean,
+  autoRenewalDefault: boolean (default: true)
+})
+priceCapPercentage (string, default: '12')
+referralCreditAmount (string, default: '200')
+paymentPlans ({
+  plan1: boolean,
+  plan2: boolean,
+  plan3: boolean,
+  payInFull: boolean,
+  monthlySubscription: boolean,
+})
+payInFullDiscount (string, default: '5')
+requireCardOnFile (boolean, default: true)
+requireFullUpfront (string | null — 'full', 'higher-deposit', 'standard', or null)
+missedPaymentDeposit (string, default: '35')
+optOutOptions ({
+  discountCredits: boolean,
+  offerHalfQuarter: boolean,
+  freeUpgrades: boolean,
+  waitlistPriority: boolean,
+  pauseSeason: boolean,
+  exitSurvey: boolean,
+  repOutreach: boolean,
+})
+```
+
+### Dynamic Calculation Formulas
+
+**Revenue projection** (STR goal slider):
+```
+projectedRevenue = 78.0 - (sliderValue / 100) * 5.0   // $78.0MM → $73.0MM
+```
+
+**Renewal rate** (STR goal slider):
+```
+renewalRate = 72 + (sliderValue / 100) * 16   // 72.0% → 88.0%
+```
+
+**Implied churn:**
+```
+churnCount = Math.round(9345 * (1 - renewalRate / 100))
+```
+
+### Design System
+
+- Primary blue: `#4c65f0`
+- Success green: `#007a47`
+- Error red: `#d32f2f`
+- Accent lime: `#ccff00`
+- Fonts: Inter (headings), Roboto (inputs)
+- Animations: `fade-in`, `slide-in`, `slide-in-left`, `check-pop`, `pulse-glow`, `pulse`, `ping`
+- All icons are inline SVGs (no external image dependencies)
+- Badge styles: "Recommended" = `bg-[rgba(76,101,240,0.1)] text-[#4c65f0]`, "New" = `bg-[#ccff00] text-black`
 
 ---
 
 ## What's Not Yet Implemented
 
-The following items could be added to enhance the existing flows:
+### Medium Priority
 
-- **Banner linking to STR workflow** — The banner on `/campaigns` currently links to `/chat?rec=renewal-1` (the standard flow), not to `/chat?workflow=str` (the interactive slider flow). A decision is needed on which flow the banner should trigger, or whether both should be accessible.
-- **Syncing the two project copies** — The workspace copy (`/Users/joelresnicow/Claud.md/E2ECampaign`) is behind the running copy (`/Users/joelresnicow/E2ECampaign`) and does not contain the STR workflow code.
+- **Segmentation preview step** — New step between opt-out options and campaign generation showing account breakdown with adjustable thresholds
+- **Communication timeline & channel selection** — New step with date pickers for early-bird/standard/deadline windows and channel checkboxes
+- **Revenue per renewed account metric** on the goal slider (currently shows Avg Rev/Account but not as a third dynamic metric card)
+
+### Lower Priority
+
+- **Edge case handling** — Define behavior when user selects no preferences, doesn't move slider, or skips optional inputs
+- **Auto-renewal default radio** impact on campaign generation — The selection is captured in state but not yet reflected in the AI-generated campaign content
